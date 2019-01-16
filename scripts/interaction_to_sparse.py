@@ -3,7 +3,7 @@
 # Email: chenfu.shi@postgrad.manchester.ac.uk
 
 
-# Function to convert files from HiC-Pro results to a sparse matrix 
+# Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
     # add: sanity checking all inputs
     # change temp filename so it's always unique and also do cleanup at the end
     # create directories when needed
@@ -28,9 +28,10 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
     coo_row = []
     coo_col = []
     for current_file in [file_valid_pairs, file_self_circle, file_dangling, file_religation]:
-        coo_data, coo_row, coo_col = Update_coo_lists(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms)
+        #coo_data, coo_row, coo_col = Update_coo_lists(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms)
+        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop)
 
-    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_name), len(frag_name)), dtype = numpy.int32)
+    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_name), len(frag_name)), dtype = numpy.float32)
 
     return CSR_mat,frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets
 
@@ -137,7 +138,14 @@ def Update_coo_lists(current_file,data,row,col,offsets,valid_chroms):
 
     return data, row, col
 
+def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_prop):
+    """Takes file and assigns reads to restriction sites"""
 
+
+
+
+
+    return data, row, col
 
 
 
@@ -155,10 +163,10 @@ if __name__=="__main__":
     # restriction fragment definitions
     # sizes of chromosomes just to get the right chromosomes
 
-    folder = os.path.abspath("./testdata/NaiveT_27ac_B1_T1")
-    resfrag = os.path.abspath("./testdata/MboI_resfrag_hg38.bed")
+    folder = os.path.abspath("./../domani_caller/testdata/NaiveT_27ac_B1_T1")
+    resfrag = os.path.abspath("./../domani_caller/testdata/MboI_resfrag_hg38.bed")
     sizes = os.path.abspath("./annotations/hg38.txt")
-    temporary_loc = os.path.abspath("./testdata")
+    temporary_loc = os.path.abspath("./../domani_caller/testdata")
 
     CSR_mat,frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
 
