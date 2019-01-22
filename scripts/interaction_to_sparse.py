@@ -24,6 +24,8 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
 
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc)
 
+    test_distancefromsite(file_dangling,chroms_offsets,valid_chroms,frag_prop,frag_name)
+
     coo_data = []
     coo_row = []
     coo_col = []
@@ -67,7 +69,9 @@ def Prepare_files(folder,temporary_loc):
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
 
-    
+    #############################################################################################################################################
+    #############################################################################################################################################
+    #############################################################################################################################################
     # shcommands = []
     # for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
     #     command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
@@ -147,6 +151,49 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
 
     return data, row, col
 
+def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_name):
+    """tester function to see how these things look like"""
+    import matplotlib.pyplot
+    frag_index=dict()
+    for i, item in enumerate(frag_name):
+        if item not in frag_index:
+            frag_index[item] = i
+
+    distribution = [0] * 1000
+    distribution_all = [0] * 1000
+    with open(a_file, "r") as pairs:
+        for line in pairs:
+            info = line.split()
+            frag_1 = info[8]
+            frag_2 = info[9]
+            chr_1 = info[1]
+            chr_2 = info[4]
+            pos_1 = int(info[2])
+            pos_2 = int(info[5])
+            dir_1 = info[3]
+            dir_2 = info[6]
+            if (chr_1 in valid_chroms) and (chr_2 in valid_chroms):
+                index_frag_1 = frag_index[frag_1]
+                index_frag_2 = frag_index[frag_2]
+                try:
+                    if dir_1 == "+":
+                        distance = frag_prop[index_frag_1][2] - pos_1
+                    else:
+                        distance = pos_1 - frag_prop[index_frag_1][1] 
+                    if frag_prop[index_frag_1-1][3] > 400 and frag_prop[index_frag_1+1][3] > 400 and frag_prop[index_frag_1][3] > 400:
+                        distribution[distance] += 1
+                    distribution_all[distance] += 1
+                except:
+                    continue
+    fig, ax = matplotlib.pyplot.subplots()
+    multiply = sum(distribution_all)/sum(distribution)
+    #distribution =  [x * multiply for x in distribution]
+    ax.scatter(range(1000),distribution)
+    ax.scatter(range(1000),distribution_all)
+    matplotlib.pyplot.show()
+
+
+    return distribution
 
 
 
@@ -163,10 +210,10 @@ if __name__=="__main__":
     # restriction fragment definitions
     # sizes of chromosomes just to get the right chromosomes
 
-    folder = os.path.abspath("./../domani_caller/testdata/NaiveT_27ac_B1_T1")
-    resfrag = os.path.abspath("./../domani_caller/testdata/MboI_resfrag_hg38.bed")
+    folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
+    resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
     sizes = os.path.abspath("./annotations/hg38.txt")
-    temporary_loc = os.path.abspath("./../domani_caller/testdata")
+    temporary_loc = os.path.abspath("./../domain_caller/testdata")
 
     CSR_mat,frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
 
