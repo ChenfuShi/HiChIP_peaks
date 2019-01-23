@@ -4,6 +4,8 @@
 
 
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
+# restriction site is basically offset by 1. Fragment 1 has restriction site 0 and 1. last fragment will have only 5' but not 3'. now this will get assigned wrongly the the first fragment of the last chromosome
+# this way number of fragments is the same as number of sites and it doens't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
     # add: sanity checking all inputs
     # change temp filename so it's always unique and also do cleanup at the end
     # create directories when needed
@@ -19,23 +21,27 @@ import subprocess
 
 def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
     """Wrapper function to call individual funcitons"""
+    # check inputs
+    if not os.path.exists(temporary_loc):
+        os.makedirs(temporary_loc)
 
-    frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets = Read_resfrag(resfrag,sizes)
+
+    frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc)
 
-    test_distancefromsite(file_dangling,chroms_offsets,valid_chroms,frag_prop,frag_name)
-
+    distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)
+    # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
     coo_row = []
     coo_col = []
-    for current_file in [file_valid_pairs, file_self_circle, file_dangling, file_religation]:
-        #coo_data, coo_row, coo_col = Update_coo_lists(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms)
-        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop)
+    for current_file in [file_valid_pairs, file_self_circle, file_religation]:
+        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index)
+    coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True)
+    
+    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)
 
-    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_name), len(frag_name)), dtype = numpy.float32)
-
-    return CSR_mat,frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets
+    return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments
 
 
 
@@ -90,9 +96,11 @@ def Prepare_files(folder,temporary_loc):
 def Read_resfrag(resfrag,sizes):
     """Read the restriction fragment file information and prepare list"""
     # results include
-    # the number of fragments in the valid chromosomes for each chromosome
-    # the list of fragments with the name of the fragment
-    # the list of fragments with tuple with chr, start and end and length of each frag
+    # frag_amount the number of fragments in the valid chromosomes for each chromosome
+    # frag_index dictionary with all the frag names to frag index
+    # frag_prop the list of fragments with tuple with chr, start and end and length of each frag
+    # list of valid chromosomes
+    # offsets used for the sparse matrix implementation
     with open(sizes,"r") as file_sizes:
         valid_chroms=[]
         for line in file_sizes:
@@ -111,12 +119,15 @@ def Read_resfrag(resfrag,sizes):
                 frag_name.append(splitted_line[3])
                 frag_prop.append((splitted_line[0],int(splitted_line[1]),int(splitted_line[2]),int(splitted_line[2])-int(splitted_line[1])))
                 frag_amount[splitted_line[0]] += 1
-    
+    frag_index=dict()
+    for i, item in enumerate(frag_name):
+        if item not in frag_index:
+            frag_index[item] = i
     # quickly generate the offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. Need to -1 the hic fragment when using the offset
     offsets={}
     for i in range(len(valid_chroms)):
         offsets[valid_chroms[i]] = sum([frag_amount[k] for k in valid_chroms[:i]])
-    return frag_name,frag_prop,frag_amount,valid_chroms, offsets
+    return frag_index,frag_prop,frag_amount,valid_chroms, offsets
 
 
 
@@ -142,23 +153,60 @@ def Update_coo_lists(current_file,data,row,col,offsets,valid_chroms):
 
     return data, row, col
 
-def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_prop):
+def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_prop,frag_index,dangling = False,reassign = True):
     """Takes file and assigns reads to restriction sites"""
+    with open(current_file, "r") as pairs:
+        for line in pairs:
+            info = line.split()
+            frag_1 = info[8]
+            frag_2 = info[9]
+            chr_1 = info[1]
+            chr_2 = info[4]
+            pos_1 = int(info[2])
+            pos_2 = int(info[5])
+            dir_1 = info[3]
+            dir_2 = info[6]
+            if (chr_1 in valid_chroms) and (chr_2 in valid_chroms):
+                index_frag_1 = frag_index[frag_1]
+                index_frag_2 = frag_index[frag_2]
+                if reassign and not dangling:
+                    #check that fragment is correct
+                    if dir_1 == "+":
+                        if pos_1 < frag_prop[index_frag_1][1]:
+                            index_frag_1 -= 1
+                    else:
+                        if pos_1 > frag_prop[index_frag_1][2]:
+                            index_frag_1 += 1
+                    if dir_2 == "+":
+                        if pos_2 < frag_prop[index_frag_2][1]:
+                            index_frag_2 -= 1
+                    else:
+                        if pos_2 > frag_prop[index_frag_2][2]:
+                            index_frag_2 += 1
+                if dangling:
+                    if dir_1 == "-":
+                        index_frag_1 += 1
+                    if dir_2 == "-":
+                        index_frag_2 += 1
+                else:
+                    if dir_1 == "+":
+                        index_frag_1 += 1
+                    if dir_2 == "+":
+                        index_frag_2 += 1
 
-
-
-
+                    data.append(1)
+                    data.append(1)
+                    row.append(index_frag_1)
+                    col.append(index_frag_2)
+                    row.append(index_frag_2)
+                    col.append(index_frag_1)
 
     return data, row, col
 
-def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_name):
+def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_index):
     """tester function to see how these things look like"""
-    import matplotlib.pyplot
-    frag_index=dict()
-    for i, item in enumerate(frag_name):
-        if item not in frag_index:
-            frag_index[item] = i
-
+    
+    counter_shifts=0
     distribution = [0] * 1000
     distribution_all = [0] * 1000
     with open(a_file, "r") as pairs:
@@ -177,22 +225,31 @@ def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_name):
                 index_frag_2 = frag_index[frag_2]
                 try:
                     if dir_1 == "+":
+                        if pos_1 < frag_prop[index_frag_1][1]:
+                            index_frag_1 -= 1
+                            counter_shifts += 1
                         distance = frag_prop[index_frag_1][2] - pos_1
                     else:
+                        if pos_1 > frag_prop[index_frag_1][2]:
+                            index_frag_1 += 1
+                            counter_shifts += 1
                         distance = pos_1 - frag_prop[index_frag_1][1] 
                     if frag_prop[index_frag_1-1][3] > 400 and frag_prop[index_frag_1+1][3] > 400 and frag_prop[index_frag_1][3] > 400:
                         distribution[distance] += 1
                     distribution_all[distance] += 1
                 except:
                     continue
-    fig, ax = matplotlib.pyplot.subplots()
-    multiply = sum(distribution_all)/sum(distribution)
+    
+    #multiply = sum(distribution_all)/sum(distribution)
     #distribution =  [x * multiply for x in distribution]
-    ax.scatter(range(1000),distribution)
-    ax.scatter(range(1000),distribution_all)
-    matplotlib.pyplot.show()
 
+    # import matplotlib.pyplot
+    # fig, ax = matplotlib.pyplot.subplots()
+    # ax.scatter(range(1000),distribution)
+    # ax.scatter(range(1000),distribution_all)
+    # matplotlib.pyplot.show()
 
+    #print(counter_shifts)
     return distribution
 
 
@@ -215,8 +272,8 @@ if __name__=="__main__":
     sizes = os.path.abspath("./annotations/hg38.txt")
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
 
-    CSR_mat,frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
 
     scipy.sparse.save_npz('./testdata/sparse_matrix.npz', CSR_mat)
     with open("./testdata/variables.pi","wb") as picklefile:
-        pickle.dump([frag_name,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
+        pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments],picklefile)
