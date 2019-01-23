@@ -78,15 +78,15 @@ def Prepare_files(folder,temporary_loc):
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
-    # shcommands = []
-    # for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
-    #     command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
-    #     p = subprocess.Popen(command, shell=True)
-    #     # runs commands in parallel
-    #     shcommands.append(p)
-    # for p in shcommands:
-    #     #waits for them to finish
-    #     p.wait()
+    shcommands = []
+    for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
+        command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
+        p = subprocess.Popen(command, shell=True)
+        # runs commands in parallel
+        shcommands.append(p)
+    for p in shcommands:
+        #waits for them to finish
+        p.wait()
     
 
     return file_valid_pairs, file_self_circle, file_dangling, file_religation
