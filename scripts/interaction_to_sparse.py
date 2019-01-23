@@ -199,51 +199,54 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
                     if dir_2 == "+":
                         index_frag_2 += 1
 
-                    data.append(1)
-                    data.append(1)
-                    row.append(index_frag_1)
-                    col.append(index_frag_2)
-                    row.append(index_frag_2)
-                    col.append(index_frag_1)
+                data.append(1)
+                data.append(1)
+                row.append(index_frag_1)
+                col.append(index_frag_2)
+                row.append(index_frag_2)
+                col.append(index_frag_1)
 
     return data, row, col
 
 def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_index):
     """tester function to see how these things look like"""
-    #probably 10 milion reads are enough. need to put a limit on that
+    #probably 1 milion reads are enough. need to put a limit on that
     counter_shifts=0
     distribution = [0] * 1000
     distribution_all = [0] * 1000
+    num_reads = 0
     with open(a_file, "r") as pairs:
         for line in pairs:
-            info = line.split()
-            frag_1 = info[8]
-            frag_2 = info[9]
-            chr_1 = info[1]
-            chr_2 = info[4]
-            pos_1 = int(info[2])
-            pos_2 = int(info[5])
-            dir_1 = info[3]
-            dir_2 = info[6]
-            if (chr_1 in valid_chroms) and (chr_2 in valid_chroms):
-                index_frag_1 = frag_index[frag_1]
-                index_frag_2 = frag_index[frag_2]
-                try:
-                    if dir_1 == "+":
-                        if pos_1 < frag_prop[index_frag_1][1]:
-                            index_frag_1 -= 1
-                            counter_shifts += 1
-                        distance = frag_prop[index_frag_1][2] - pos_1
-                    else:
-                        if pos_1 > frag_prop[index_frag_1][2]:
-                            index_frag_1 += 1
-                            counter_shifts += 1
-                        distance = pos_1 - frag_prop[index_frag_1][1] 
-                    if frag_prop[index_frag_1-1][3] > 400 and frag_prop[index_frag_1+1][3] > 400 and frag_prop[index_frag_1][3] > 400:
-                        distribution[distance] += 1
-                    distribution_all[distance] += 1
-                except:
-                    continue
+            while num_reads < 1000000:
+                info = line.split()
+                frag_1 = info[8]
+                frag_2 = info[9]
+                chr_1 = info[1]
+                chr_2 = info[4]
+                pos_1 = int(info[2])
+                pos_2 = int(info[5])
+                dir_1 = info[3]
+                dir_2 = info[6]
+                if (chr_1 in valid_chroms) and (chr_2 in valid_chroms):
+                    index_frag_1 = frag_index[frag_1]
+                    index_frag_2 = frag_index[frag_2]
+                    try:
+                        if dir_1 == "+":
+                            if pos_1 < frag_prop[index_frag_1][1]:
+                                index_frag_1 -= 1
+                                counter_shifts += 1
+                            distance = frag_prop[index_frag_1][2] - pos_1
+                        else:
+                            if pos_1 > frag_prop[index_frag_1][2]:
+                                index_frag_1 += 1
+                                counter_shifts += 1
+                            distance = pos_1 - frag_prop[index_frag_1][1] 
+                        if frag_prop[index_frag_1-1][3] > 400 and frag_prop[index_frag_1+1][3] > 400 and frag_prop[index_frag_1][3] > 400:
+                            distribution[distance] += 1
+                            num_reads += 1
+                        distribution_all[distance] += 1
+                    except:
+                        continue
     
     #multiply = sum(distribution_all)/sum(distribution)
     #distribution =  [x * multiply for x in distribution]
