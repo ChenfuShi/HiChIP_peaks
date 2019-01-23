@@ -6,9 +6,9 @@
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
 # restriction site is basically offset by 1. Fragment 1 has restriction site 0 and 1. last fragment will have only 5' but not 3'. now this will get assigned wrongly the the first fragment of the last chromosome
 # this way number of fragments is the same as number of sites and it doens't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
-    # add: sanity checking all inputs
+    # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end
-    # create directories when needed
+    # create directories when needed # DONE
 
 #########################################
 import scipy
@@ -22,9 +22,12 @@ import subprocess
 def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
     """Wrapper function to call individual funcitons"""
     # check inputs
-    if not os.path.exists(temporary_loc):
+    if not os.path.isdir(temporary_loc):
         os.makedirs(temporary_loc)
-
+    if not os.path.isdir(folder):
+        raise Exception("couldn't find folder containing HiC-Pro results")
+    if not os.path.isfile(sizes) or not os.path.isfile(resfrag):
+        raise Exception("annotation files couldn't be opened")
 
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
@@ -57,8 +60,10 @@ def Prepare_files(folder,temporary_loc):
 
 
     regex = re.compile(".*allValidPairs")
-    file_valid_pairs = list(filter(regex.match, files))[0]
-    
+    try:
+        file_valid_pairs = list(filter(regex.match, files))[0]
+    except IndexError:
+        raise Exception("couldn't find allValidPairs file")
 
     regex = re.compile(".*SCPairs")
     list_self_circle = list(filter(regex.match, files))
@@ -205,7 +210,7 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
 
 def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_index):
     """tester function to see how these things look like"""
-    
+    #probably 10 milion reads are enough. need to put a limit on that
     counter_shifts=0
     distribution = [0] * 1000
     distribution_all = [0] * 1000
