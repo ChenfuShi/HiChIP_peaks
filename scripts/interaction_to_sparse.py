@@ -244,6 +244,11 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
                     data.extend((weight_1a*weight_2a,weight_1a*weight_2b,weight_1b*weight_2a,weight_1b*weight_2b))
                     data.extend((weight_1a*weight_2a,weight_1a*weight_2b,weight_1b*weight_2a,weight_1b*weight_2b))
 
+                    if dir_1 == "+":
+                        index_frag_1 += 1
+                    if dir_2 == "+":
+                        index_frag_2 += 1
+                        
                     if dir_1 == "+" and dir_2 == "+":
                         row.append(index_frag_1)
                         col.append(index_frag_2)
