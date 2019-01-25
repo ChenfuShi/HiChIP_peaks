@@ -33,15 +33,15 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
 
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc)
 
-    distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)
+    #distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)
     #smooth the distribution out so it can be used directly in the read assignment
     # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
     coo_row = []
     coo_col = []
     for current_file in [file_valid_pairs, file_self_circle, file_religation]:
-        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,distribution_nice_fragments)
-    coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True)
+        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,distribution_nice_fragments,reassign=False)
+    #coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True)
     
     CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)
 
