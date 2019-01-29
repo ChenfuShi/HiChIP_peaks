@@ -6,3 +6,13 @@
 # Main executor of the pipeline
 
 #########################################
+
+
+# do one
+
+# check results
+# print results such as how many reads
+
+# do second
+
+# repeat

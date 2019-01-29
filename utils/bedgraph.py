@@ -12,5 +12,10 @@ import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from scripts.interaction_to_sparse import *
+from scripts.sparse_to_peaks import *
 
 HiCpro_to_sparse()
+
+extract_diagonal()
+
+# combine that with the fragment prop and you will have it :)

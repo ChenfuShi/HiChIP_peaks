@@ -17,15 +17,21 @@ import re
 import multiprocessing
 import subprocess
 
-def sparse_to_peaks(CSR_mat):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets):
     """Wrapper function to call individual funcitons"""
 
 
 
+    return diagonal, peaks
+
+def moving_integration (values, window):
+    weights = numpy.repeat(1.0, window)
+    sma = numpy.convolve(values, weights, 'same')
+    return sma
 
 
-
-
+def extract_diagonal(CSR_mat,window):
+    """extract the diagonal including the sum of the window in all directions. calls moving_integration as well"""
 
 
 
@@ -45,4 +51,11 @@ def sparse_to_peaks(CSR_mat):
 
 
 if __name__=="__main__":
+    """test functions here"""
+    import pickle
     CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix.npz')
+    with open("./testdata/variables.pi","rb") as picklefile:
+        frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments = pickle.load(picklefile)
+
+    sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets)
+

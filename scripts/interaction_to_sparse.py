@@ -9,6 +9,7 @@
     # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end
     # create directories when needed # DONE
+    # options that i might want to include: use DE? keep temp files? the probabilistic reassignment stuff problably goes to waste bin
 
 #########################################
 import scipy
@@ -99,7 +100,6 @@ def Prepare_files(folder,temporary_loc):
     return file_valid_pairs, file_self_circle, file_dangling, file_religation
 
 
-
 def Read_resfrag(resfrag,sizes):
     """Read the restriction fragment file information and prepare list"""
     # results include
@@ -136,29 +136,6 @@ def Read_resfrag(resfrag,sizes):
         offsets[valid_chroms[i]] = sum([frag_amount[k] for k in valid_chroms[:i]])
     return frag_index,frag_prop,frag_amount,valid_chroms, offsets
 
-
-
-def Update_coo_lists(current_file,data,row,col,offsets,valid_chroms):
-    """Takes file and adds reads to the 3 lists containing the data"""
-    with open(current_file, "r") as pairs:
-        for line in pairs:
-            info = line.split()
-            end_1 = info[8].split("_")[-1]
-            end_2 = info[9].split("_")[-1]
-            chr_1 = info[1]
-            chr_2 = info[4]
-            if (chr_1 in valid_chroms) and (chr_2 in valid_chroms):
-                frag_1 = int(end_1) + offsets[chr_1] - 1
-                frag_2 = int(end_2) + offsets[chr_2] - 1
-                data.append(1)
-                data.append(1)
-                row.append(frag_1)
-                col.append(frag_2)
-                row.append(frag_2)
-                col.append(frag_1)
-
-
-    return data, row, col
 
 def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_prop,frag_index,distribution_nice_fragments=None,dangling = False,reassign = True):
     """Takes file and assigns reads to restriction sites"""
@@ -344,6 +321,7 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
                     col.append(index_frag_1)
 
     return data, row, col
+
 
 def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_index):
     """tester function to see how these things look like"""
