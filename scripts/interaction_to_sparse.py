@@ -33,15 +33,16 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
 
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc)
 
-    distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)
-    #smooth the distribution out so it can be used directly in the read assignment
+    distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)  #fake
+    #smooth the distribution out so it can be used directly in the read assignment. currently not doing anything because not useful
     # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
     coo_row = []
     coo_col = []
+    #things have been set to not do the reassignment because it doesn't seem to improve things.
     for current_file in [file_valid_pairs, file_self_circle, file_religation]:
-        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,distribution_nice_fragments)
-    coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True)
+        coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,distribution_nice_fragments,reassign=False)
+    coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True,reassign=False)
     
     CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)
 
@@ -346,6 +347,9 @@ def Update_coo_lists_site(current_file,data, row, col,offsets,valid_chroms,frag_
 
 def test_distancefromsite(a_file,offsets,valid_chroms,frag_prop,frag_index):
     """tester function to see how these things look like"""
+    #don't do this as it's a waste of time now
+    return None
+
     distribution = [0] * 1000
     distribution_all = [0] * 1000
     with open(a_file, "r") as pairs:

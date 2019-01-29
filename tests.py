@@ -18,3 +18,6 @@ scipy.sparse.save_npz('./testdata/sparse_matrix_mumbach.npz', CSR_mat)
 
 with open("./testdata/variables.pi","wb") as picklefile:
     pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments],picklefile)
+
+
+    
