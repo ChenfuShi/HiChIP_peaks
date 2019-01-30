@@ -19,8 +19,9 @@ import os
 import re
 import multiprocessing
 import subprocess
+import uuid
 
-def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
+def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4)[0:5]):
     """Wrapper function to call individual funcitons"""
     # check inputs
     if not os.path.isdir(temporary_loc):
@@ -32,7 +33,7 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
 
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
-    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc)
+    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode)
 
     distribution_nice_fragments = test_distancefromsite(file_valid_pairs,chroms_offsets,valid_chroms,frag_prop,frag_index)  #fake
     #smooth the distribution out so it can be used directly in the read assignment. currently not doing anything because not useful
@@ -46,12 +47,16 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc):
     coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,chroms_offsets,valid_chroms,frag_prop,frag_index,dangling = True,reassign=False)
     
     CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)
-
+    if keeptemp == False:
+        os.remove(file_self_circle)
+        os.remove(file_religation)
+        os.remove(file_dangling)
+    
     return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments
 
 
 
-def Prepare_files(folder,temporary_loc):
+def Prepare_files(folder,temporary_loc,tempcode):
     """Find out files in folder remove duplicates and return variables locating files. If present merge files"""
 
 
@@ -70,15 +75,15 @@ def Prepare_files(folder,temporary_loc):
 
     regex = re.compile(".*SCPairs")
     list_self_circle = list(filter(regex.match, files))
-    file_self_circle = os.path.join(temporary_loc, "SCPairs")
+    file_self_circle = os.path.join(temporary_loc, tempcode + "SCPairs")
 
     regex = re.compile(".*DEPairs")
     list_dangling = list(filter(regex.match, files))
-    file_dangling = os.path.join(temporary_loc, "DEPairs")
+    file_dangling = os.path.join(temporary_loc, tempcode + "DEPairs")
 
     regex = re.compile(".*REPairs")
     list_religation = list(filter(regex.match, files))
-    file_religation = os.path.join(temporary_loc, "REPairs")
+    file_religation = os.path.join(temporary_loc, tempcode + "REPairs")
 
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
@@ -86,15 +91,15 @@ def Prepare_files(folder,temporary_loc):
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
-    # shcommands = []
-    # for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
-    #     command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
-    #     p = subprocess.Popen(command, shell=True)
-    #     # runs commands in parallel
-    #     shcommands.append(p)
-    # for p in shcommands:
-    #     #waits for them to finish
-    #     p.wait()
+    shcommands = []
+    for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
+        command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
+        p = subprocess.Popen(command, shell=True)
+        # runs commands in parallel
+        shcommands.append(p)
+    for p in shcommands:
+        #waits for them to finish
+        p.wait()
     
 
     return file_valid_pairs, file_self_circle, file_dangling, file_religation
