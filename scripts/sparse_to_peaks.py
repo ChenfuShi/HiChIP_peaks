@@ -16,15 +16,22 @@ import os
 import re
 import multiprocessing
 import subprocess
-import matplotlib
+import matplotlib.pyplot
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets):
     """Wrapper function to call individual funcitons"""
 
     diagonal = extract_diagonal(CSR_mat,2)
 
-    matplotlib.pyplot.plot(diagonal)
-    matplotlib.pyplot.show()
+    smoothed_diagonal = moving_average(diagonal,5)
+    background_diagonal = moving_average(diagonal, 1000)*2 # will think of something better hopefully ahah
+
+    peaks = [1 if x>y else 0 for x,y in zip(smoothed_diagonal,background_diagonal)]
+
+    
+
+
+
 
     return diagonal, peaks
 
@@ -32,7 +39,10 @@ def moving_integration (values, window):
     weights = numpy.repeat(1.0, window)
     sma = numpy.convolve(values, weights, 'same')
     return sma
-
+def moving_average (values, window):
+    weights = numpy.repeat(1.0, window)/window
+    sma = numpy.convolve(values, weights, 'same')
+    return sma
 
 def extract_diagonal(CSR_mat,window):
     """extract the diagonal including the sum of the window in all directions. calls moving_integration as well"""
