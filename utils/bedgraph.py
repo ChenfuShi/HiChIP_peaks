@@ -15,6 +15,7 @@ from scripts.interaction_to_sparse import *
 from scripts.sparse_to_peaks import *
 
 import argparse
+import math
 
 parser = argparse.ArgumentParser(description="input HiCPro results and generates a bedgraph file")
 
@@ -45,3 +46,12 @@ diagonal = moving_average(diagonal,args.smoothing)
 
 
 # combine that with the fragment prop and you will have it :)
+#checking length of fragprop and diagonal to be the same
+if len(frag_prop) != len(diagonal):
+    raise Exception("something went wrong, diagonal size different")
+with open(output_file, "w") as bdg_file:
+    for i in range(1,len(diagonal)-1):
+        if frag_prop[i-1][0] != frag_prop[i+1][0]:
+            continue
+        bdg_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor(frag_prop[i-1][2]+frag_prop[i-1][1]/2),math.floor(frag_prop[i][2]+frag_prop[i][1]/2),diagonal[i]))
+
