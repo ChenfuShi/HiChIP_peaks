@@ -23,9 +23,9 @@ parser.add_argument("-i", "--input", dest="hicpro_results",action="store",requir
                     help="HiC-Pro results directory")
 parser.add_argument("-o", "--output", dest="output_file",action="store",required=True,
                     help="Output file, will write temporary files in that directory")
-parser.add_argument("-s", "--smoothing", dest="smoothing",action="store",required=False, type=int, Default=5,
+parser.add_argument("-s", "--smoothing", dest="smoothing",action="store",required=False, type=int, default=5,
                     help="Smoothing factor")
-parser.add_argument("-d", "--offdiag", dest="off_diag",action="store",required=False, type=int, Default=2,
+parser.add_argument("-d", "--offdiag", dest="off_diag",action="store",required=False, type=int, default=2,
                     help="How many off diagonal needs to be included")
 parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
                     help="HiCpro resfrag file")
