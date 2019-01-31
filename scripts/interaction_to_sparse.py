@@ -21,7 +21,7 @@ import multiprocessing
 import subprocess
 import uuid
 
-def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4)[0:5]):
+def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
     """Wrapper function to call individual funcitons"""
     # check inputs
     if not os.path.isdir(temporary_loc):
