@@ -26,7 +26,8 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     smoothed_diagonal = moving_average(diagonal,5)
     quick_peaks = quick_call(smoothed_diagonal)
 
-    peaks = [1 if x>y else 0 for x,y in zip(smoothed_diagonal,background_diagonal)]
+    
+
 
     
 
@@ -57,8 +58,13 @@ def extract_diagonal(CSR_mat,window):
 def quick_call(smoothed_diagonal):
     """calls the peaks using a very simple genomic average"""
 
-    
+    average_signal = numpy.mean(smoothed_diagonal)
+    quick_p_vals=[]
 
+    for res_site in smoothed_diagonal.tolist():
+        
+
+        
     return quick_peaks
 
 
@@ -83,7 +89,7 @@ if __name__=="__main__":
     import pickle
     CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix.npz')
     with open("./testdata/variables.pi","rb") as picklefile:
-        frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,distribution_nice_fragments = pickle.load(picklefile)
+        frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
 
     sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets)
 
