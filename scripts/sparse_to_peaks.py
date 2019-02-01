@@ -24,7 +24,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     diagonal = extract_diagonal(CSR_mat,2)
 
     smoothed_diagonal = moving_average(diagonal,5)
-    background_diagonal = moving_average(diagonal, 1000)*2 # will think of something better hopefully ahah
+    quick_peaks = quick_call(smoothed_diagonal)
 
     peaks = [1 if x>y else 0 for x,y in zip(smoothed_diagonal,background_diagonal)]
 
@@ -54,11 +54,19 @@ def extract_diagonal(CSR_mat,window):
         diagonal = [sum(x) for x in zip(diagonal, [0]*i + off_diagonal, off_diagonal + [0]*i)]
     return diagonal
 
+def quick_call(smoothed_diagonal):
+    """calls the peaks using a very simple genomic average"""
+
+    
+
+    return quick_peaks
 
 
 
+def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
 
 
+    return refined_peaks
 
 
 
