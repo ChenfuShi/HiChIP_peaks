@@ -11,6 +11,9 @@
 
 import scipy
 import scipy.sparse
+import scipy.stats, scipy.stats.distributions
+import statsmodels.stats.multitest
+import math
 import numpy
 import os
 import re
@@ -21,7 +24,7 @@ import matplotlib.pyplot
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets):
     """Wrapper function to call individual funcitons"""
 
-    diagonal = extract_diagonal(CSR_mat,2)
+    diagonal = extract_diagonal(CSR_mat,2)[0:50000]
 
     smoothed_diagonal = moving_average(diagonal,5)
     quick_peaks = quick_call(smoothed_diagonal)
@@ -62,9 +65,11 @@ def quick_call(smoothed_diagonal):
     quick_p_vals=[]
 
     for res_site in smoothed_diagonal.tolist():
-        
-
-        
+        quick_p_vals.append(scipy.stats.distributions.poisson.sf(res_site, average_signal))
+    print(quick_p_vals)
+    quick_peaks , FDR_corrected = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.10, method = "indep")
+    print(quick_peaks)
+    print(FDR_corrected)
     return quick_peaks
 
 
