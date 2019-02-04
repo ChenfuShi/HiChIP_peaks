@@ -32,7 +32,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     import pickle
     with open("./testdata/peaks_tests.pi" ,"wb") as pickleout:
         pickle.dump([smoothed_diagonal,quick_peaks],pickleout)
-    
+
 
     
 
@@ -52,13 +52,13 @@ def moving_average (values, window):
 
 def extract_diagonal(CSR_mat,window):
     """extract the diagonal including the sum of the window in all directions. calls moving_integration as well"""
-    diagonal = CSR_mat.diagonal()
+    diagonal = CSR_mat.diagonal()/2
     if window == 0:
-        return diagonal
-    for i in range(1,window):
-        off_diagonal = CSR_mat.diagonal(i)
+        return numpy.array(diagonal)
+    for i in range(1,window+1):
+        off_diagonal = CSR_mat.diagonal(k=i).tolist()
         diagonal = [sum(x) for x in zip(diagonal, [0]*i + off_diagonal, off_diagonal + [0]*i)]
-    return diagonal
+    return numpy.array(diagonal)
 
 def quick_call(smoothed_diagonal):
     """calls the peaks using a very simple genomic average"""
@@ -69,9 +69,11 @@ def quick_call(smoothed_diagonal):
 
     for res_site in smoothed_diagonal.tolist(): 
         quick_p_vals.append(poisson_pre_pvals[res_site])
-    
-    quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
 
+    quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
+    matplotlib.pyplot.plot([1000 if x else 0 for x in quick_peaks])
+    matplotlib.pyplot.plot(smoothed_diagonal)
+    matplotlib.pyplot.show()
     return quick_peaks
 
 

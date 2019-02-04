@@ -109,7 +109,7 @@ def Read_resfrag(resfrag,sizes):
     # frag_index dictionary with all the frag names to frag index
     # frag_prop the list of fragments with tuple with chr, start and end and length of each frag
     # list of valid chromosomes
-    # offsets used for the sparse matrix implementation
+    # offsets used for the sparse matrix implementation, not used anymore there, bust might still be useful
     with open(sizes,"r") as file_sizes:
         valid_chroms=[]
         for line in file_sizes:
