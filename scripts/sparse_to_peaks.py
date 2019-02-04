@@ -11,7 +11,7 @@
 
 import scipy
 import scipy.sparse
-import scipy.stats, scipy.stats.distributions
+import scipy.stats
 import statsmodels.stats.multitest
 import math
 import numpy
@@ -24,13 +24,15 @@ import matplotlib.pyplot
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets):
     """Wrapper function to call individual funcitons"""
 
-    diagonal = extract_diagonal(CSR_mat,2)[0:50000]
+    diagonal = extract_diagonal(CSR_mat,2)
 
-    smoothed_diagonal = moving_average(diagonal,5)
+    smoothed_diagonal = numpy.rint(moving_integration(diagonal,5)).astype(int)
     quick_peaks = quick_call(smoothed_diagonal)
 
+    import pickle
+    with open("./testdata/peaks_tests.pi" ,"wb") as pickleout:
+        pickle.dump([smoothed_diagonal,quick_peaks],pickleout)
     
-
 
     
 
@@ -63,13 +65,13 @@ def quick_call(smoothed_diagonal):
 
     average_signal = numpy.mean(smoothed_diagonal)
     quick_p_vals=[]
+    poisson_pre_pvals = [scipy.stats.poisson.sf(x, average_signal) + scipy.stats.poisson.pmf(x, average_signal) for x in range(numpy.max(smoothed_diagonal)+1)]
 
-    for res_site in smoothed_diagonal.tolist():
-        quick_p_vals.append(scipy.stats.distributions.poisson.sf(res_site, average_signal))
-    print(quick_p_vals)
-    quick_peaks , FDR_corrected = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.10, method = "indep")
-    print(quick_peaks)
-    print(FDR_corrected)
+    for res_site in smoothed_diagonal.tolist(): 
+        quick_p_vals.append(poisson_pre_pvals[res_site])
+    
+    quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
+
     return quick_peaks
 
 
@@ -92,7 +94,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
 if __name__=="__main__":
     """test functions here"""
     import pickle
-    CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix.npz')
+    CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix_mumbach_non_reassigned_chr1.npz')
     with open("./testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
 
