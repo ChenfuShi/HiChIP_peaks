@@ -51,7 +51,7 @@ def moving_average (values, window):
     return sma
 
 def extract_diagonal(CSR_mat,window):
-    """extract the diagonal including the sum of the window in all directions. calls moving_integration as well"""
+    """extract the diagonal including the sum of the window in all directions"""
     diagonal = CSR_mat.diagonal()/2
     if window == 0:
         return numpy.array(diagonal)
