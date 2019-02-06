@@ -38,7 +38,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
 
 
-
+    #peaks returned is just a list with 0 and 1. proper bed file is saved
     return diagonal, peaks
 
 def moving_integration (values, window):
@@ -79,16 +79,17 @@ def quick_call(smoothed_diagonal):
 
 
 def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
-
+    """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
+    then clean up isolated stuff and return peaks"""
 
     return refined_peaks
 
 
 
+def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,output_bed):
+    """print out a bed file with refined peaks, also add as a score the fold change of the highest point"""
 
-
-
-
+    pass
 
 
 
