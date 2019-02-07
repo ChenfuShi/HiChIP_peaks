@@ -20,6 +20,7 @@ import re
 import multiprocessing
 import subprocess
 import matplotlib.pyplot
+import itertools
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets):
     """Wrapper function to call individual funcitons"""
@@ -28,6 +29,9 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     smoothed_diagonal = numpy.rint(moving_integration(diagonal,5)).astype(int)
     quick_peaks = quick_call(smoothed_diagonal)
+
+    refined_peaks = refined_call(smoothed_diagonal,quick_call,frag_prop)
+
 
     import pickle
     with open("./testdata/peaks_tests.pi" ,"wb") as pickleout:
@@ -81,6 +85,27 @@ def quick_call(smoothed_diagonal):
 def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
+
+    lengths = [x[3] for x in frag_prop][1:] + [0]
+    group_lengths = moving_integration(lengths, 4)[:584662]
+    # select only the bits that give you noise. On which to model stuff
+    noise_lengths = list(itertools.compress(lengths, [not i for i in quick_peaks]))
+    noise_diagonal = list(itertools.compress(smoothed_diagonal, [not i for i in quick_peaks]))
+    
+    # estimate overdispersion parameter from data
+    nbinom_data = statsmodels.api.NegativeBinomial(noise_diagonal,numpy.ones(len(noise_diagonal)))
+    nb = nbinom_data.fit()
+    nb_const, nb_alpha = nb.params
+
+    # lowess fit the size distribution
+
+    # associate a mean with every site, from the size distribution. maybe correct for the local mean as well?
+
+    # run peak calling using a negative binomial model, input the p and mean calculated using the mean and the dispersion parameter from the nb fit
+
+    # clean up peak calling by removing peaks that are only 1 width
+
+    # return list
 
     return refined_peaks
 
