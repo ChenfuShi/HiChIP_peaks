@@ -11,8 +11,8 @@
 
 import scipy
 import scipy.sparse
-import scipy.stats
-import statsmodels.stats.multitest
+import scipy.stats , scipy.interpolate
+import statsmodels.stats.multitest , statsmodels , statsmodels.api
 import math
 import numpy
 import os
@@ -30,7 +30,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     smoothed_diagonal = numpy.rint(moving_integration(diagonal,5)).astype(int)
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks = refined_call(smoothed_diagonal,quick_call,frag_prop)
+    refined_peaks = refined_call(smoothed_diagonal,quick_peaks,frag_prop)
 
 
     import pickle
@@ -89,7 +89,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     lengths = [x[3] for x in frag_prop][1:] + [0]
     group_lengths = moving_integration(lengths, 4)[:584662]
     # select only the bits that give you noise. On which to model stuff
-    noise_lengths = list(itertools.compress(lengths, [not i for i in quick_peaks]))
+    noise_lengths = list(itertools.compress(group_lengths, [not i for i in quick_peaks]))
     noise_diagonal = list(itertools.compress(smoothed_diagonal, [not i for i in quick_peaks]))
     
     # estimate overdispersion parameter from data
@@ -98,10 +98,28 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     nb_const, nb_alpha = nb.params
 
     # lowess fit the size distribution
+    # subset of 100k fragments
+    idx = numpy.random.choice(len(noise_lengths), size=100000, replace=False)
+    subset_lengths = [noise_lengths[n] for n in idx]
+    subset_diagonal = [noise_diagonal[n] for n in idx]
+    # find lowess prediction
+    predicted_stuff = statsmodels.api.nonparametric.lowess(subset_diagonal, subset_lengths,return_sorted=True) # check parameters
+    predicted_lengths = list(zip(*predicted_stuff))[0]
+    predicted_diagonals = list(zip(*predicted_stuff))[1]
+    # use that prediction to interpolate a function to predict new data
+    size_function = scipy.interpolate.interp1d(predicted_lengths, predicted_diagonals, bounds_error=False) # check parameters as well
+    
+    #ynew = size_function(xnew)
 
-    # associate a mean with every site, from the size distribution. maybe correct for the local mean as well?
+
+
+    # associate a mean with every site, from the size distribution. maybe correct for the local mean as well? how do you actually associate both
+    # calculate mean. if local mean is higher add that amount to the result of the interpolation
+    # smaller than or bigger than just use the latest value
 
     # run peak calling using a negative binomial model, input the p and mean calculated using the mean and the dispersion parameter from the nb fit
+    
+    #MAYBE false discovery rate depending on how bad it looks like
 
     # clean up peak calling by removing peaks that are only 1 width
 
