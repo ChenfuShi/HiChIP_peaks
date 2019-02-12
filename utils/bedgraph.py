@@ -23,7 +23,7 @@ parser.add_argument("-i", "--input", dest="hicpro_results",action="store",requir
                     help="HiC-Pro results directory")
 parser.add_argument("-o", "--output", dest="output_file",action="store",required=True,
                     help="Output file, will write temporary files in that directory")
-parser.add_argument("-s", "--smoothing", dest="smoothing",action="store",required=False, type=int, default=5,
+parser.add_argument("-s", "--smoothing", dest="smoothing",action="store",required=False, type=int, default=3,
                     help="Smoothing factor")
 parser.add_argument("-d", "--offdiag", dest="off_diag",action="store",required=False, type=int, default=2,
                     help="How many off diagonal needs to be included")
@@ -53,5 +53,5 @@ with open(output_file, "w") as bdg_file:
     for i in range(1,len(diagonal)-1):
         if frag_prop[i-1][0] != frag_prop[i+1][0]:
             continue
-        bdg_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor(frag_prop[i-1][2]+frag_prop[i-1][1]/2),math.floor(frag_prop[i][2]+frag_prop[i][1]/2),diagonal[i]))
+        bdg_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),diagonal[i]))
 

@@ -27,14 +27,14 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     diagonal = extract_diagonal(CSR_mat,2)
 
-    smoothed_diagonal = numpy.rint(moving_integration(diagonal,5)).astype(int)
+    smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks = refined_call(smoothed_diagonal,quick_peaks,frag_prop)
+    refined_peaks , peak_p_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop)
 
     output_bed = os.path.join(output_dir,"peaks.bed")
     output_bedgraph =  os.path.join(output_dir,"graph.bdg")
-    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,output_bed,output_bedgraph)
+    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph)
     
 
 
@@ -112,7 +112,9 @@ def quick_call(smoothed_diagonal):
     for res_site in smoothed_diagonal.tolist(): 
         quick_p_vals.append(poisson_pre_pvals[res_site])
 
-    quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
+    #quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
+
+    quick_peaks = [True if x < 0.00000001 else False for x in quick_p_vals] #seems to work better
     
     # matplotlib.pyplot.plot([1000 if x else 0 for x in quick_peaks])
     # matplotlib.pyplot.plot(smoothed_diagonal)
@@ -126,8 +128,8 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
 
-    lengths = [x[3] for x in frag_prop][1:] + [0]
-    group_lengths = moving_integration(lengths, 4)
+    lengths = [x[3] for x in frag_prop] 
+    group_lengths = moving_integration(lengths, 2)  ###changed to 2, so the 2 fragments within
     min_allowed_size = math.floor(numpy.percentile(group_lengths, 1))
     max_allowed_size = math.floor(numpy.percentile(group_lengths, 99))
     # add 1s to quick peaks to exclude them from the noise modelling
@@ -157,8 +159,13 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     predicted_diagonals = list(zip(*predicted_stuff))[1]
     # use that prediction to interpolate a function to predict new data
     size_function = scipy.interpolate.interp1d(predicted_lengths, predicted_diagonals, bounds_error=True) 
-
+    max_interpolated = max(predicted_lengths)
+    min_interpolated = min(predicted_lengths)
     #ynew = size_function(xnew)
+
+    # matplotlib.pyplot.plot([size_function(x) for x in range(min_interpolated,max_interpolated)])
+    # matplotlib.pyplot.show()
+
 
     # associate a mean with every site, from the size distribution that is not a mean, it's a mode. maybe correct for the local mean as well? how do you actually associate both
     # calculate mean. if local mean is higher add that amount to the result of the interpolation
@@ -166,16 +173,17 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
 
     size_mean = numpy.mean(predicted_diagonals)
     diagonal_mean = numpy.mean(noise_diagonal)
+
     mean_mode_diff = diagonal_mean - size_mean 
     expected_background=[]
     for i in range(len(smoothed_diagonal)):
         start_index , end_index = get_range(frag_prop,i,10000)
         local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
         local_length = group_lengths[i]
-        if local_length > max_allowed_size:
-            local_length = max_allowed_size-1
-        if local_length < min_allowed_size:
-            local_length = min_allowed_size+1
+        if local_length > max_interpolated:
+            local_length = max_interpolated-1
+        if local_length < min_interpolated:
+            local_length = min_interpolated+1
         if local_background > diagonal_mean:
             expected_background.append(size_function(local_length) + mean_mode_diff + local_background - diagonal_mean)
         else:
@@ -191,13 +199,13 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
         nb_p = nb_n/(expected_background[i]+nb_n)
         nb_p_vals.append(scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) )
 
-    # matplotlib.pyplot.hist(nb_p_vals)
+    # matplotlib.pyplot.hist(nb_p_vals,bins=50)
     # matplotlib.pyplot.show()
 
     # MAYBE false discovery rate depending on how bad it looks like or set a proper p value. macs uses different thing for FDR and its possible only if using controls.
     # nb_peaks, nb_q_vals = statsmodels.stats.multitest.fdrcorrection(nb_p_vals, alpha = 0.05)
 
-    nb_peaks = [True if x < 0.00001 else False for x in nb_p_vals] #seems to work better
+    nb_peaks = [True if x < 0.001 else False for x in nb_p_vals] #seems to work better
 
     # clean up peak calling by removing peaks that are only 1 width
     peaks_string = "".join(["1" if x else "0" for x in nb_peaks])
@@ -214,11 +222,11 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
 
     if len(expected_background) != len(smoothed_diagonal) or len(smoothed_diagonal) != len(group_lengths) or len(refined_peaks) != len(group_lengths):
         raise Exception("something happened in the lengths of the various vectors")
-    return refined_peaks
+    return refined_peaks , nb_p_vals
 
 
 
-def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,output_bed,output_bedgraph):
+def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph):
     """print out a bed file with refined peaks, also add as a score the fold change of the highest point"""
 
     with open(output_bed + ".temp", "w") as output_file:
@@ -226,7 +234,7 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,output_bed,output_bed
             if frag_prop[i-1][0] != frag_prop[i+1][0]:
                 continue
             if refined_peaks[i] == 1:
-                output_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor(frag_prop[i-1][2]+frag_prop[i-1][1]/2),math.floor(frag_prop[i][2]+frag_prop[i][1]/2),smoothed_diagonal[i]))
+                output_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),smoothed_diagonal[i]))
     bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4 -o mean > " + output_bed 
     subprocess.check_call(bedmerge_command ,shell=True)
     os.remove(output_bed + ".temp")
@@ -235,7 +243,7 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,output_bed,output_bed
         for i in range(1,len(smoothed_diagonal)-1):
             if frag_prop[i-1][0] != frag_prop[i+1][0]:
                 continue
-            bdg_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor(frag_prop[i-1][2]+frag_prop[i-1][1]/2),math.floor(frag_prop[i][2]+frag_prop[i][1]/2),smoothed_diagonal[i]))
+            bdg_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),smoothed_diagonal[i]))
 
                     
 
