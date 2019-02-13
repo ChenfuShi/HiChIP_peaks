@@ -43,7 +43,7 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,valid_chroms,frag_index)
     coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,valid_chroms,frag_index,dangling = True)
     
-    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)
+    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index), len(frag_index)), dtype = numpy.float32)
     if keeptemp == False:
         os.remove(file_self_circle)
         os.remove(file_religation)
