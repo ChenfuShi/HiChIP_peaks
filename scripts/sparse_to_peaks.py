@@ -22,7 +22,7 @@ import subprocess
 import matplotlib.pyplot
 import itertools
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=0.01):
     """Wrapper function to call individual funcitons"""
 
     diagonal = extract_diagonal(CSR_mat,2)
@@ -30,7 +30,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks , peak_p_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop)
+    refined_peaks , peak_p_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR)
 
     output_bed = os.path.join(output_dir,"peaks.bed")
     output_bedgraph =  os.path.join(output_dir,"graph.bdg")
@@ -124,7 +124,7 @@ def quick_call(smoothed_diagonal):
 
 
 
-def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
+def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
 
@@ -149,7 +149,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     nb_const, nb_alpha = nb.params
 
     # lowess fit the size distribution
-    # subset of 100k fragments
+    # subset of 200k fragments
     idx = numpy.random.choice(len(noise_lengths), size=200000, replace=False)
     subset_lengths = [noise_lengths[n] for n in idx]
     subset_diagonal = [noise_diagonal[n] for n in idx]
@@ -203,9 +203,9 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop, smoothing=5):
     # matplotlib.pyplot.show()
 
     # MAYBE false discovery rate depending on how bad it looks like or set a proper p value. macs uses different thing for FDR and its possible only if using controls.
-    # nb_peaks, nb_q_vals = statsmodels.stats.multitest.fdrcorrection(nb_p_vals, alpha = 0.05)
+    nb_peaks, nb_q_vals = statsmodels.stats.multitest.fdrcorrection(nb_p_vals, alpha = FDR)
 
-    nb_peaks = [True if x < 0.001 else False for x in nb_p_vals] #seems to work better
+    # nb_peaks = [True if x < 0.001 else False for x in nb_p_vals] #seems to work better
 
     # clean up peak calling by removing peaks that are only 1 width
     peaks_string = "".join(["1" if x else "0" for x in nb_peaks])
@@ -234,8 +234,8 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_be
             if frag_prop[i-1][0] != frag_prop[i+1][0]:
                 continue
             if refined_peaks[i] == 1:
-                output_file.write("{}\t{}\t{}\t{}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),smoothed_diagonal[i]))
-    bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4 -o mean > " + output_bed 
+                output_file.write("{}\t{}\t{}\t{}\t{:10.15f}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),smoothed_diagonal[i],-math.log10(peak_p_vals[i])))
+    bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4,5 -o mean,max> " + output_bed 
     subprocess.check_call(bedmerge_command ,shell=True)
     os.remove(output_bed + ".temp")
 
