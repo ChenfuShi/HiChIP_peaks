@@ -131,7 +131,7 @@ def Read_resfrag(resfrag,sizes):
     frag_index=dict()
     for i, item in enumerate(frag_name):
         if item not in frag_index:
-            frag_index[item] = i
+            frag_index[item] = i-1
     # quickly generate the offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. Need to -1 the hic fragment when using the offset
     offsets={}
     for i in range(len(valid_chroms)):
