@@ -16,10 +16,10 @@ temporary_loc = os.path.abspath("./testdata/combined_Mumbach")
 CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
 smoothed_diagonal, refined_peaks = sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,temporary_loc,FDR=0.01)
 
-#scipy.sparse.save_npz('./testdata/sparse_matrix_mumbach.npz', CSR_mat)
+scipy.sparse.save_npz('./testdata/sparse_matrix_mumbach.npz', CSR_mat)
 
-#with open("./testdata/variables.pi","wb") as picklefile:
-#    pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
+with open("./testdata/variables.pi","wb") as picklefile:
+   pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
 
 
     

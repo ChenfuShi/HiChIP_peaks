@@ -4,7 +4,8 @@
 
 
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
-# restriction site is basically offset by 1. Fragment 1 has restriction site 0 and 1. last fragment will have only 5' but not 3'. now this will get assigned wrongly the the first fragment of the last chromosome
+# restriction site is basically offset by 1. Fragment 0 has restriction site 0 and 1. last fragment will have only 5' but not 3'because that would create an extra index.
+# now this will get assigned wrongly the the first and last fragment of the chromosome
 # this way number of fragments is the same as number of sites and it doens't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
     # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end #DONE
@@ -43,7 +44,7 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,valid_chroms,frag_index)
     coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,valid_chroms,frag_index,dangling = True)
     
-    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index), len(frag_index)), dtype = numpy.float32)
+    CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)-1, len(frag_index))-1, dtype = numpy.float32)[:len(frag_index),:len(frag_index)]
     if keeptemp == False:
         os.remove(file_self_circle)
         os.remove(file_religation)
@@ -130,9 +131,8 @@ def Read_resfrag(resfrag,sizes):
                 frag_amount[splitted_line[0]] += 1
     frag_index=dict()
     for i, item in enumerate(frag_name):
-        if item not in frag_index:
-            frag_index[item] = i-1
-    # quickly generate the offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. Need to -1 the hic fragment when using the offset
+        frag_index[item] = i
+    # quickly generate the offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. 
     offsets={}
     for i in range(len(valid_chroms)):
         offsets[valid_chroms[i]] = sum([frag_amount[k] for k in valid_chroms[:i]])
