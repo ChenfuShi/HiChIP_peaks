@@ -25,12 +25,24 @@ import itertools
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=0.01):
     """Wrapper function to call individual funcitons"""
 
-    diagonal = extract_diagonal(CSR_mat,2)
+    print("#######################################")
+    print("Extracting pairs for ChIP peaks calling")
 
+    diagonal , num_reads = extract_diagonal(CSR_mat,2)
+    print("Number of reads used in peak calling: {}".format(num_reads))
+    if num_reads < 20000000:
+        print("WARNING: number of reads used for peak calling is very low. Consider doing more sequencing")
     smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3
+
+    print("#######################################")
+    print("Identifying high confidence peaks to remove them from background modelling")
+
     quick_peaks = quick_call(smoothed_diagonal)
 
     refined_peaks , peak_p_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR)
+
+    print("#######################################")
+    print("Writing peaks and bedgraph to output folder")
 
     output_bed = os.path.join(output_dir,"peaks.bed")
     output_bedgraph =  os.path.join(output_dir,"graph.bdg")
@@ -95,12 +107,14 @@ def get_local_background(signal_list, smoothed_diagonal, start_index, end_index)
 def extract_diagonal(CSR_mat,window):
     """extract the diagonal including the sum of the window in all directions"""
     diagonal = CSR_mat.diagonal()/2
+    num_reads = sum(diagonal)
     if window == 0:
-        return numpy.array(diagonal)
+        return numpy.array(diagonal),num_reads
     for i in range(1,window+1):
         off_diagonal = CSR_mat.diagonal(k=i).tolist()
+        num_reads += sum(off_diagonal)
         diagonal = [sum(x) for x in zip(diagonal, [0]*i + off_diagonal, off_diagonal + [0]*i)]
-    return numpy.array(diagonal)
+    return numpy.array(diagonal),num_reads
 
 def quick_call(smoothed_diagonal):
     """calls the peaks using a very simple genomic average"""
@@ -128,6 +142,9 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
 
+    print("#######################################")
+    print("Model background noise as a negative binomial")
+
     lengths = [x[3] for x in frag_prop] 
     group_lengths = moving_integration(lengths, 2)  ###changed to 2, so the 2 fragments within
     min_allowed_size = math.floor(numpy.percentile(group_lengths, 1))
@@ -144,9 +161,13 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
 
 
     # estimate overdispersion parameter from data
-    nbinom_data = statsmodels.api.NegativeBinomial(noise_diagonal,numpy.ones(len(noise_diagonal)))
+    nbinom_data = statsmodels.api.NegativeBinomial(noise_diagonal,numpy.ones(len(noise_diagonal)),disp=False)
     nb = nbinom_data.fit()
     nb_const, nb_alpha = nb.params
+
+    print("Negative binomial overdispersion parameter: {}".format(nb_alpha))
+    print("#######################################")
+    print("Identify effect of fragment size bias")
 
     # lowess fit the size distribution
     # subset of 200k fragments
@@ -166,6 +187,8 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     # matplotlib.pyplot.plot([size_function(x) for x in range(min_interpolated,max_interpolated)])
     # matplotlib.pyplot.show()
 
+    print("#######################################")
+    print("Estimating expected background levels from local background and fragment size")
 
     # associate a mean with every site, from the size distribution that is not a mean, it's a mode. maybe correct for the local mean as well? how do you actually associate both
     # calculate mean. if local mean is higher add that amount to the result of the interpolation
@@ -192,6 +215,10 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     # matplotlib.pyplot.plot(smoothed_diagonal)
     # matplotlib.pyplot.plot(expected_background)
     # matplotlib.pyplot.show()
+
+    print("#######################################")
+    print("Identifying enriched regions using negative binomial model")
+
     # run peak calling using a negative binomial model, input the p and mean calculated using the mean and the dispersion parameter from the nb fit
     nb_p_vals = []
     nb_n = 1/nb_alpha
@@ -214,7 +241,9 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     # return list
     refined_peaks=[int(x) for x in list(cleaned_string)]
 
-
+    print("#######################################")
+    print("Refined peak calling done")
+    
     # matplotlib.pyplot.plot([1000 if x==1 else 0 for x in refined_peaks])
     # matplotlib.pyplot.plot(smoothed_diagonal)
     # matplotlib.pyplot.show()
@@ -256,6 +285,9 @@ if __name__=="__main__":
     with open("./testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir)
+    smoothed_diagonal , refined_peaks = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir)
+
+    with open("./testdata/peaks.pi","wb") as picklefile:
+        pickle.dump([smoothed_diagonal , refined_peaks],picklefile)
 
 

@@ -41,7 +41,7 @@ temporary_loc = os.path.dirname(output_file)
 
 CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(args.hicpro_results,args.resfrag,args.valid_chroms,temporary_loc)
 
-diagonal = extract_diagonal(CSR_mat,args.off_diag)
+diagonal , num_reads = extract_diagonal(CSR_mat,args.off_diag)
 diagonal = moving_average(diagonal,args.smoothing)
 
 

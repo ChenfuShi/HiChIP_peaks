@@ -32,9 +32,20 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
     if not os.path.isfile(sizes) or not os.path.isfile(resfrag):
         raise Exception("annotation files couldn't be opened")
 
+    print("Loading experiment information and read pairs")
+    #print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
+    print("#######################################")
+    print("Start reading experiment information (restriction fragments and chromosomes)")
+
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
+    print("#######################################")
+    print("Preparing HiC-Pro output for import")
+
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode)
+
+    print("#######################################")
+    print("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
 
     # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
@@ -49,7 +60,11 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         os.remove(file_self_circle)
         os.remove(file_religation)
         os.remove(file_dangling)
-    
+
+    print("#######################################")
+    print("Sparse matrix of experiment generated")
+    print("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
+
     return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets
 
 
