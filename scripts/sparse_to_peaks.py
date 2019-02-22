@@ -287,7 +287,7 @@ if __name__=="__main__":
     output_dir = os.path.abspath("./testdata")
     smoothed_diagonal , refined_peaks = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir)
 
-    with open("./testdata/peaks.pi","wb") as picklefile:
+    with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
         pickle.dump([smoothed_diagonal , refined_peaks],picklefile)
 
 
