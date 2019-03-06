@@ -1,0 +1,4 @@
+include annotation/*.txt
+include data/*txt
+include LICENSE
+include README.md
