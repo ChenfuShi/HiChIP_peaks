@@ -19,12 +19,6 @@
 
 def main():
     import os
-    try:
-        #this works only when installed
-        from hichip_tool import interaction_to_sparse,sparse_to_peaks
-    except:
-        import interaction_to_sparse 
-        import sparse_to_peaks
     ## here all inputs.
 
 
@@ -34,14 +28,31 @@ def main():
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
     output_dir = os.path.abspath("./testdata")
     keeptemp = False
+    threads=4
+    FDR=0.01
+    os.environ["OMP_NUM_THREADS"] = "threads" 
+    os.environ["OPENBLAS_NUM_THREADS"] = "threads"
+    os.environ["MKL_NUM_THREADS"] = "threads" 
+    os.environ["VECLIB_MAXIMUM_THREADS"] = "threads" 
+    os.environ["NUMEXPR_NUM_THREADS"] = "threads" 
 
+    print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
+    print(" FDR: {}".format(FDR))
+    print(" Output directory: {} \n Keep temporary files?: {} \n Threads(minimum is 4): {}".format(output_dir,keeptemp,threads))
+    
 
-
-
+    #apparently moving this should make sure that number of threads is respected in numpy?
+    try:
+        #this works only when installed
+        from hichip_tool import interaction_to_sparse,sparse_to_peaks
+    except:
+        import interaction_to_sparse 
+        import sparse_to_peaks
+    
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=keeptemp)
 
 
-    smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir)
+    smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
 
 

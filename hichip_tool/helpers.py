@@ -1,3 +1,13 @@
+#########################################
+# Author: Chenfu Shi
+# Email: chenfu.shi@postgrad.manchester.ac.uk
+
+
+# some helper functions
+
+#########################################
+
+
 import gzip
 
 

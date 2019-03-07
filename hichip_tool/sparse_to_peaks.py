@@ -22,8 +22,12 @@ import subprocess
 import matplotlib.pyplot
 import itertools
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=0.01):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=0.01,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""
+
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
 
     print("#######################################")
     print("Extracting pairs for ChIP peaks calling")
@@ -45,7 +49,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     print("Writing peaks and bedgraph to output folder")
 
     output_bed = os.path.join(output_dir,"peaks.bed")
-    output_bedgraph =  os.path.join(output_dir,"graph.bdg")
+    output_bedgraph =  os.path.join(output_dir,"bedgraph.bdg")
     bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph)
     
 

@@ -8,7 +8,8 @@
 
 version=0.1
 
-
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 
 from setuptools import setup
@@ -16,6 +17,8 @@ from setuptools import setup
 setup(name='hichip_tool',
     version=version,
     description='tool to find peaks from hichip data',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/ChenfuShi/domain_caller_site',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',

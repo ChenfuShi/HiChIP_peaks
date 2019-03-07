@@ -21,6 +21,12 @@ import re
 import multiprocessing
 import subprocess
 import uuid
+try:
+    #this works only when installed
+    from hichip_tool import helpers
+except:
+    import helpers 
+
 
 def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
     """Wrapper function to call individual funcitons"""
@@ -35,7 +41,6 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         raise Exception("annotation files couldn't be opened")
         
     print("Loading experiment information and read pairs")
-    #print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
     print("#######################################")
     print("Start reading experiment information (restriction fragments and chromosomes)")
 
@@ -138,7 +143,7 @@ def Read_resfrag(resfrag,sizes):
             for line in file_sizes:
                 valid_chroms.append(line.split("\t")[0])
     
-    with open(resfrag,"r") as file_resfrag:
+    with helpers.open_by_suffix(resfrag) as file_resfrag:
         frag_name=[]
         frag_prop=[]
         frag_amount={}
