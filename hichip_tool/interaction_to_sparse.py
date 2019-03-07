@@ -126,11 +126,15 @@ def Read_resfrag(resfrag,sizes):
     # frag_prop the list of fragments with tuple with chr, start and end and length of each frag
     # list of valid chromosomes
     # offsets used for the sparse matrix implementation, not used anymore there, bust might still be useful
+    if sizes==None:
+        valid_chroms=['chr1', 'chr2', 'chr3', 'chr4', 'chr5',
+                    'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15',
+                    'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']
     with open(sizes,"r") as file_sizes:
         valid_chroms=[]
         for line in file_sizes:
             valid_chroms.append(line.split("\t")[0])
-
+    
     with open(resfrag,"r") as file_resfrag:
         frag_name=[]
         frag_prop=[]
@@ -203,7 +207,7 @@ if __name__=="__main__":
 
     folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
     resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
-    sizes = os.path.abspath("./annotations/hg38.txt")
+    sizes = None
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
 
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)

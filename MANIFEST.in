@@ -1,4 +1,4 @@
-include annotation/*.txt
-include data/*txt
+include hichip_utils/*.txt
+include hichip_tool/*txt
 include LICENSE
 include README.md

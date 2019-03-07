@@ -11,10 +11,6 @@ version=0.1
 
 
 
-
-
-
-
 from setuptools import setup
 
 setup(name='hichip_tool',
@@ -24,22 +20,20 @@ setup(name='hichip_tool',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',
     license='MIT',
-    packages=['scripts','utils'],
+    packages=['hichip_tool','hichip_utils'],
     install_requires=[
         'scipy',
         'numpy',
-        'os',
     ],
     entry_points = {
         'console_scripts': 
-        ['peak_call=scripts.main:main',
+        ['peak_call=hichip_tool.main:main',
+        'make_bedgraph=hichip_utils.bedgraph:main',
+        'IPquality=hichip_utils.IPquality:main',
 
         ],
     },
-    scripts=['utils/bedgraph.py',
-            'utils/IPquality.py',
-        ],
-
+    python_requires='>=3.6',
     zip_safe=False
     
     )
