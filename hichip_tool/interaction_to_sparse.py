@@ -6,7 +6,7 @@
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
 # restriction site is basically offset by 1. Fragment 0 has restriction site 0 and 1. last fragment will have only 5' but not 3'because that would create an extra index.
 # now this will get assigned wrongly the the first and last fragment of the chromosome
-# this way number of fragments is the same as number of sites and it doens't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
+# this way number of fragments is the same as number of sites and it doesn't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
     # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end #DONE
     # create directories when needed # DONE
@@ -108,9 +108,7 @@ def Prepare_files(folder,temporary_loc,tempcode):
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
 
-    #############################################################################################################################################
-    #############################################################################################################################################
-    #############################################################################################################################################
+
     shcommands = []
     for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
         command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output

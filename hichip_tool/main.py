@@ -3,40 +3,59 @@
 # Email: chenfu.shi@postgrad.manchester.ac.uk
 
 
-# Main executor of the pipeline
+# Main executor of the pipeline to call peaks from hicpro data
 
 #########################################
 
 
-# do one
-
-# check results
-# print results such as how many reads
-
-# do second
-
-# repeat
-
 def main():
     import os
+    import argparse
     ## here all inputs.
 
 
-    folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
-    resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
-    sizes = None #or hicpro chromosome sizes
-    temporary_loc = os.path.abspath("./../domain_caller/testdata")
-    output_dir = os.path.abspath("./testdata")
-    keeptemp = False
-    threads=4
-    FDR=0.01
-    os.environ["OMP_NUM_THREADS"] = "threads" 
-    os.environ["OPENBLAS_NUM_THREADS"] = "threads"
-    os.environ["MKL_NUM_THREADS"] = "threads" 
-    os.environ["VECLIB_MAXIMUM_THREADS"] = "threads" 
-    os.environ["NUMEXPR_NUM_THREADS"] = "threads" 
+    parser = argparse.ArgumentParser(description="Peak calling from HiChIP data")
 
-    print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
+    parser.add_argument("-i", "--input", dest="hicpro_results",action="store",required=True,
+                        help="HiC-Pro results directory containing validPairs file and others")
+    parser.add_argument("-o", "--output", dest="output_directory",action="store",required=True,
+                        help="Output file, will write temporary files in that directory")
+    parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
+                        help="HiCpro resfrag file")
+    parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.01, type=float,
+                        help="False discovery rate, default = 0.01")                        
+    parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
+                        help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
+    parser.add_argument("-t", "--temporary_loc", dest="temporary_loc",action="store",required=False, default=None,
+                        help="Temporary directory. If not supplied will be output directory")
+    parser.add_argument("-w", "--worker_threads", dest="threads",action="store",required=False, default=4, type=int,
+                        help="Number of threads, minimum 4")
+    parser.add_argument("-k", "--keep_temp", dest="keeptemp",action="store_true", default=False,
+                        help="Keep temporary files")
+    args = parser.parse_args()
+
+
+
+
+
+    hicpro_results = os.path.abspath(args.hicpro_results)
+    resfrag = os.path.abspath(args.resfrag)
+    sizes = args.sizes
+    if args.temporary_loc == None:
+        temporary_loc = os.path.abspath(args.output_directory)
+    else:
+        temporary_loc = os.path.abspath(args.temporary_loc)
+    output_dir = os.path.abspath(args.output_directory)
+    keeptemp = args.keeptemp
+    threads=args.threads
+    FDR=args.FDR
+    os.environ["OMP_NUM_THREADS"] = threads
+    os.environ["OPENBLAS_NUM_THREADS"] = threads
+    os.environ["MKL_NUM_THREADS"] = threads
+    os.environ["VECLIB_MAXIMUM_THREADS"] = threads
+    os.environ["NUMEXPR_NUM_THREADS"] = threads
+
+    print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(hicpro_results,resfrag,sizes,temporary_loc))
     print(" FDR: {}".format(FDR))
     print(" Output directory: {} \n Keep temporary files?: {} \n Threads(minimum is 4): {}".format(output_dir,keeptemp,threads))
     
@@ -49,13 +68,13 @@ def main():
         import interaction_to_sparse 
         import sparse_to_peaks
     
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=keeptemp)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,keeptemp=keeptemp)
 
 
     smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
 
-
+    #do ip efficiency
 
 
 
