@@ -20,6 +20,7 @@
 def main():
     import os
     try:
+        #this works only when installed
         from hichip_tool import interaction_to_sparse,sparse_to_peaks
     except:
         import interaction_to_sparse 
@@ -31,11 +32,16 @@ def main():
     resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
     sizes = None #or hicpro chromosome sizes
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
+    output_dir = os.path.abspath("./testdata")
+    keeptemp = False
 
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
 
 
-    smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir)
+
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=keeptemp)
+
+
+    smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir)
 
 
 

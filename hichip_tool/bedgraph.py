@@ -10,10 +10,12 @@
 def main():
     import os, sys
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-    from hichip_tool.interaction_to_sparse import HiCpro_to_sparse
-    from hichip_tool.sparse_to_peaks import extract_diagonal,moving_average
-
+    try:
+        #this works only when installed
+        from hichip_tool import interaction_to_sparse,sparse_to_peaks
+    except:
+        import interaction_to_sparse 
+        import sparse_to_peaks
     import argparse
     import math
 
@@ -39,10 +41,10 @@ def main():
 
 
 
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(args.hicpro_results,args.resfrag,args.valid_chroms,temporary_loc)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(args.hicpro_results,args.resfrag,args.valid_chroms,temporary_loc)
 
-    diagonal , num_reads = extract_diagonal(CSR_mat,args.off_diag)
-    diagonal = moving_average(diagonal,args.smoothing)
+    diagonal , num_reads = sparse_to_peaks.extract_diagonal(CSR_mat,args.off_diag)
+    diagonal = sparse_to_peaks.moving_average(diagonal,args.smoothing)
 
 
     # combine that with the fragment prop and you will have it :)

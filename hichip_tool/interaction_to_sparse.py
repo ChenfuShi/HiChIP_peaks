@@ -29,9 +29,11 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         os.makedirs(temporary_loc)
     if not os.path.isdir(folder):
         raise Exception("couldn't find folder containing HiC-Pro results")
-    if not os.path.isfile(sizes) or not os.path.isfile(resfrag):
+    if not os.path.isfile(resfrag):
         raise Exception("annotation files couldn't be opened")
-
+    if sizes!=None and not os.path.isfile(sizes) :
+        raise Exception("annotation files couldn't be opened")
+        
     print("Loading experiment information and read pairs")
     #print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
     print("#######################################")
@@ -130,10 +132,11 @@ def Read_resfrag(resfrag,sizes):
         valid_chroms=['chr1', 'chr2', 'chr3', 'chr4', 'chr5',
                     'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15',
                     'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']
-    with open(sizes,"r") as file_sizes:
-        valid_chroms=[]
-        for line in file_sizes:
-            valid_chroms.append(line.split("\t")[0])
+    else:
+        with open(sizes,"r") as file_sizes:
+            valid_chroms=[]
+            for line in file_sizes:
+                valid_chroms.append(line.split("\t")[0])
     
     with open(resfrag,"r") as file_resfrag:
         frag_name=[]

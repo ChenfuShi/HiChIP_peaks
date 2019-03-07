@@ -20,16 +20,18 @@ setup(name='hichip_tool',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',
     license='MIT',
-    packages=['hichip_tool','hichip_utils'],
+    packages=['hichip_tool'],
     install_requires=[
         'scipy',
         'numpy',
+        'statsmodels',
+        'matplotlib'
     ],
     entry_points = {
         'console_scripts': 
         ['peak_call=hichip_tool.main:main',
-        'make_bedgraph=hichip_utils.bedgraph:main',
-        'IPquality=hichip_utils.IPquality:main',
+        'make_bedgraph=hichip_tool.bedgraph:main',
+        'IPquality=hichip_tool.IPquality:main',
 
         ],
     },
