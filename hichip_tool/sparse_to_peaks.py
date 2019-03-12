@@ -21,6 +21,7 @@ import multiprocessing
 import subprocess
 import matplotlib.pyplot
 import itertools
+import functools
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.01,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""
@@ -43,7 +44,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks , peak_p_vals , peaks_q_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR)
+    refined_peaks , peak_p_vals , peaks_q_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR,threads)
 
     print("#######################################")
     print("Writing peaks and bedgraph to output folder")
@@ -140,9 +141,30 @@ def quick_call(smoothed_diagonal):
 
     return quick_peaks
 
+def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_lengths,max_interpolated,min_interpolated,diagonal_mean,size_function,mean_mode_diff,i):
+    """parallel version of expected background"""
+    start_index , end_index = get_range(frag_prop,i,10000)
+    local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
+    local_length = group_lengths[i]
+    if local_length > max_interpolated:
+        local_length = max_interpolated-1
+    if local_length < min_interpolated:
+        local_length = min_interpolated+1
+    if local_background > diagonal_mean:
+        return size_function(local_length) + mean_mode_diff + local_background - diagonal_mean
+    else:
+        return size_function(local_length) + mean_mode_diff
+
+def parallel_negative_binomial(expected_background,nb_n,smoothed_diagonal,site_index):
+    nb_p = nb_n/(expected_background[site_index]+nb_n)
+    return scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) 
 
 
-def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
+
+
+
+
+def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
 
@@ -202,22 +224,35 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     diagonal_mean = numpy.mean(noise_diagonal)
 
     mean_mode_diff = diagonal_mean - size_mean 
-    expected_background=[]
-    for i in range(len(smoothed_diagonal)):
-        start_index , end_index = get_range(frag_prop,i,10000)
-        local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
-        local_length = group_lengths[i]
-        if local_length > max_interpolated:
-            local_length = max_interpolated-1
-        if local_length < min_interpolated:
-            local_length = min_interpolated+1
-        if local_background > diagonal_mean:
-            expected_background.append(size_function(local_length) + mean_mode_diff + local_background - diagonal_mean)
-        else:
-            expected_background.append(size_function(local_length) + mean_mode_diff)
+
+    # print("doing parallel stuff now")
+    parallel_partial_expected_back = functools.partial(parallel_expected_background,frag_prop,smoothed_diagonal,noise_filter,group_lengths,max_interpolated,min_interpolated,diagonal_mean,size_function,mean_mode_diff)
+    pool = multiprocessing.Pool(threads)
+    expected_background = pool.map(parallel_partial_expected_back, range(len(smoothed_diagonal)),chunksize=50000)
+    pool.close()
+    pool.join()
+
+    # print("parallel stuff finishes now")
+    # expected_background=[]
+    # for i in range(len(smoothed_diagonal)):
+    #     start_index , end_index = get_range(frag_prop,i,10000)
+    #     local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
+    #     local_length = group_lengths[i]
+    #     if local_length > max_interpolated:
+    #         local_length = max_interpolated-1
+    #     if local_length < min_interpolated:
+    #         local_length = min_interpolated+1
+    #     if local_background > diagonal_mean:
+    #         expected_background.append(size_function(local_length) + mean_mode_diff + local_background - diagonal_mean)
+    #     else:
+    #         expected_background.append(size_function(local_length) + mean_mode_diff)
+    # if expected_background==expected_background2:
+    #     print("seems fine")
+
 
     # matplotlib.pyplot.plot(smoothed_diagonal)
     # matplotlib.pyplot.plot(expected_background)
+    # matplotlib.pyplot.plot(expected_background2)
     # matplotlib.pyplot.show()
 
     print("#######################################")
@@ -226,9 +261,20 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
     # run peak calling using a negative binomial model, input the p and mean calculated using the mean and the dispersion parameter from the nb fit
     nb_p_vals = []
     nb_n = 1/nb_alpha
-    for site_index in range(len(smoothed_diagonal)): 
-        nb_p = nb_n/(expected_background[i]+nb_n)
-        nb_p_vals.append(scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) )
+    # for site_index in range(len(smoothed_diagonal)): 
+    #     nb_p = nb_n/(expected_background[site_index]+nb_n)
+    #     nb_p_vals.append(scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) )
+
+    # print("parallel negative binomial test")
+
+    parallel_partial_nb_test = functools.partial(parallel_negative_binomial,expected_background,nb_n,smoothed_diagonal)
+    pool = multiprocessing.Pool(threads)
+    nb_p_vals = pool.map(parallel_partial_nb_test, range(len(smoothed_diagonal)),chunksize=50000)
+    pool.close()
+    pool.join()
+    # if nb_p_vals2==nb_p_vals:
+    #     print("seems fine")    
+
 
     # matplotlib.pyplot.hist(nb_p_vals,bins=50)
     # matplotlib.pyplot.show()
@@ -289,7 +335,7 @@ if __name__=="__main__":
     with open("../domain_caller_site/testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata")
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",threads=6)
 
     with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
         pickle.dump([smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
