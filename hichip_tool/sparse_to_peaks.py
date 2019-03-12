@@ -23,7 +23,7 @@ import matplotlib.pyplot
 import itertools
 import functools
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.01,threads=4,keeptemp=False):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.10,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""
 
     if not os.path.isdir(output_dir):
@@ -278,8 +278,8 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
     #     print("seems fine")    
 
 
-    # matplotlib.pyplot.hist(nb_p_vals,bins=50)
-    # matplotlib.pyplot.show()
+    matplotlib.pyplot.hist(nb_p_vals,bins=50)
+    matplotlib.pyplot.show()
 
     # MAYBE false discovery rate depending on how bad it looks like or set a proper p value. macs uses different thing for FDR and its possible only if using controls.
     nb_peaks, nb_q_vals = statsmodels.stats.multitest.fdrcorrection(nb_p_vals, alpha = FDR)

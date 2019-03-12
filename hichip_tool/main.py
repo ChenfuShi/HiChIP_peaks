@@ -24,7 +24,7 @@ def main():
                         help="HiCpro resfrag file")
     parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default="hichip_tool_",
                         help="Output file name prefix")
-    parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.01, type=float,
+    parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.10, type=float,
                         help="False discovery rate, default = 0.01")                        
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
                         help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
@@ -55,11 +55,11 @@ def main():
         threads = 4 
         print("Minimum threads is 4 !!")
     FDR=args.FDR
-    os.environ["OMP_NUM_THREADS"] = threads
-    os.environ["OPENBLAS_NUM_THREADS"] = threads
-    os.environ["MKL_NUM_THREADS"] = threads
-    os.environ["VECLIB_MAXIMUM_THREADS"] = threads
-    os.environ["NUMEXPR_NUM_THREADS"] = threads
+    os.environ["OMP_NUM_THREADS"] = str(threads)
+    os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
+    os.environ["MKL_NUM_THREADS"] = str(threads)
+    os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
 
     print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(hicpro_results,resfrag,sizes,temporary_loc))
     print(" FDR: {}".format(FDR))
