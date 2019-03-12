@@ -22,7 +22,7 @@ import subprocess
 import matplotlib.pyplot
 import itertools
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=0.01,threads=4,keeptemp=False):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.01,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""
 
     if not os.path.isdir(output_dir):
@@ -43,20 +43,20 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks , peak_p_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR)
+    refined_peaks , peak_p_vals , peaks_q_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR)
 
     print("#######################################")
     print("Writing peaks and bedgraph to output folder")
 
-    output_bed = os.path.join(output_dir,"peaks.bed")
-    output_bedgraph =  os.path.join(output_dir,"bedgraph.bdg")
+    output_bed = os.path.join(output_dir, prefix + "peaks.bed")
+    output_bedgraph =  os.path.join(output_dir, prefix + "bedgraph.bdg")
     bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph)
     
 
 
 
     #peaks returned is just a list with 0 and 1. proper bed file is saved
-    return smoothed_diagonal, refined_peaks
+    return smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals
 
 def moving_integration (values, window):
     weights = numpy.repeat(1.0, window)
@@ -255,7 +255,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR):
 
     if len(expected_background) != len(smoothed_diagonal) or len(smoothed_diagonal) != len(group_lengths) or len(refined_peaks) != len(group_lengths):
         raise Exception("something happened in the lengths of the various vectors")
-    return refined_peaks , nb_p_vals
+    return refined_peaks , nb_p_vals, nb_q_vals
 
 
 
@@ -285,13 +285,13 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_be
 if __name__=="__main__":
     """test functions here"""
     import pickle
-    CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix_mumbach_non_reassigned_chr1.npz')
-    with open("./testdata/variables.pi","rb") as picklefile:
+    CSR_mat = scipy.sparse.load_npz('../domain_caller_site/testdata/sparse_matrix_mumbach_non_reassigned_chr1.npz')
+    with open("../domain_caller_site/testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    smoothed_diagonal , refined_peaks = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata")
 
     with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
-        pickle.dump([smoothed_diagonal , refined_peaks],picklefile)
+        pickle.dump([smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
 
 

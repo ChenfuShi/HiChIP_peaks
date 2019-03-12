@@ -22,6 +22,8 @@ def main():
                         help="Output file, will write temporary files in that directory")
     parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
                         help="HiCpro resfrag file")
+    parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default="hichip_tool_",
+                        help="Output file name prefix")
     parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.01, type=float,
                         help="False discovery rate, default = 0.01")                        
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
@@ -40,6 +42,7 @@ def main():
 
     hicpro_results = os.path.abspath(args.hicpro_results)
     resfrag = os.path.abspath(args.resfrag)
+    prefix=args.prefix
     sizes = args.sizes
     if args.temporary_loc == None:
         temporary_loc = os.path.abspath(args.output_directory)
@@ -48,6 +51,9 @@ def main():
     output_dir = os.path.abspath(args.output_directory)
     keeptemp = args.keeptemp
     threads=args.threads
+    if threads < 4:
+        threads = 4 
+        print("Minimum threads is 4 !!")
     FDR=args.FDR
     os.environ["OMP_NUM_THREADS"] = threads
     os.environ["OPENBLAS_NUM_THREADS"] = threads
@@ -68,15 +74,15 @@ def main():
         import interaction_to_sparse 
         import sparse_to_peaks
     
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,keeptemp=keeptemp)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,prefix,keeptemp=keeptemp)
 
 
-    smoothed_diagonal , refined_peaks = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,FDR=FDR,threads=threads,keeptemp=keeptemp)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals = sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
 
     #do ip efficiency
 
-
+    #prepare quality metrics and print out to report file
 
 
 

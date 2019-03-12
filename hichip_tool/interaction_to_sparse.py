@@ -6,6 +6,7 @@
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
 # restriction site is basically offset by 1. Fragment 0 has restriction site 0 and 1. last fragment will have only 5' but not 3'because that would create an extra index.
 # now this will get assigned wrongly the the first and last fragment of the chromosome
+# to get the real bp location of the restriction site you can use frag_prop[i][1]
 # this way number of fragments is the same as number of sites and it doesn't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
     # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end #DONE
@@ -28,7 +29,7 @@ except:
     import helpers 
 
 
-def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
+def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
     """Wrapper function to call individual funcitons"""
     # check inputs
     if not os.path.isdir(temporary_loc):
@@ -49,7 +50,7 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
     print("#######################################")
     print("Preparing HiC-Pro output for import")
 
-    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode)
+    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode,prefix)
 
     print("#######################################")
     print("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
@@ -71,12 +72,16 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
     print("#######################################")
     print("Sparse matrix of experiment generated")
     print("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
-
+    if keeptemp == True:
+        print("Saving intermediate files for further use")
+        scipy.sparse.save_npz(os.path.join(temporary_loc, prefix + "CSR_matrix.npz"), CSR_mat)
+        with open(os.path.join(temporary_loc, prefix + "variables.pickle"),"wb") as picklefile:
+            pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
     return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets
 
 
 
-def Prepare_files(folder,temporary_loc,tempcode):
+def Prepare_files(folder,temporary_loc,tempcode,prefix):
     """Find out files in folder remove duplicates and return variables locating files. If present merge files"""
 
 
@@ -95,15 +100,15 @@ def Prepare_files(folder,temporary_loc,tempcode):
 
     regex = re.compile(".*SCPairs")
     list_self_circle = list(filter(regex.match, files))
-    file_self_circle = os.path.join(temporary_loc, tempcode + "SCPairs")
+    file_self_circle = os.path.join(temporary_loc, prefix + tempcode + "SCPairs")
 
     regex = re.compile(".*DEPairs")
     list_dangling = list(filter(regex.match, files))
-    file_dangling = os.path.join(temporary_loc, tempcode + "DEPairs")
+    file_dangling = os.path.join(temporary_loc, prefix + tempcode + "DEPairs")
 
     regex = re.compile(".*REPairs")
     list_religation = list(filter(regex.match, files))
-    file_religation = os.path.join(temporary_loc, tempcode + "REPairs")
+    file_religation = os.path.join(temporary_loc, prefix + tempcode + "REPairs")
 
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
@@ -216,7 +221,7 @@ if __name__=="__main__":
     sizes = None
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
 
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,"testdata")
 
     scipy.sparse.save_npz('./testdata/sparse_matrix.npz', CSR_mat)
     with open("./testdata/variables.pi","wb") as picklefile:

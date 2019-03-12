@@ -41,7 +41,7 @@ def main():
 
 
 
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(args.hicpro_results,args.resfrag,args.valid_chroms,temporary_loc)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(args.hicpro_results,args.resfrag,args.valid_chroms,temporary_loc,"bedgraph_temp")
 
     diagonal , num_reads = sparse_to_peaks.extract_diagonal(CSR_mat,args.off_diag)
     diagonal = sparse_to_peaks.moving_average(diagonal,args.smoothing)
