@@ -145,7 +145,7 @@ def quick_call(smoothed_diagonal):
 
 def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_lengths,max_interpolated,min_interpolated,diagonal_mean,size_function,mean_mode_diff,i):
     """parallel version of expected background"""
-    start_index , end_index = get_range(frag_prop,i,10000)
+    start_index , end_index = get_range(frag_prop,i,50000)
     local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
     local_length = group_lengths[i]
     if local_length > max_interpolated:
@@ -158,7 +158,7 @@ def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_
         return size_function(local_length) + mean_mode_diff
 
 def parallel_negative_binomial(expected_background,nb_n,smoothed_diagonal,site_index):
-    nb_p = nb_n/(expected_background[site_index]+nb_n)
+    nb_p = nb_n/(expected_background[-1]+nb_n)
     return scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) 
 
 
@@ -254,7 +254,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
 
     # matplotlib.pyplot.plot(smoothed_diagonal)
     # matplotlib.pyplot.plot(expected_background)
-    # matplotlib.pyplot.plot(expected_background2)
+    # # matplotlib.pyplot.plot(expected_background2)
     # matplotlib.pyplot.show()
 
     print("#######################################")
@@ -278,7 +278,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
     #     print("seems fine")    
 
 
-    # matplotlib.pyplot.hist(nb_p_vals,bins=50)
+    # matplotlib.pyplot.hist(nb_p_vals,bins=20)
     # matplotlib.pyplot.show()
 
     # MAYBE false discovery rate depending on how bad it looks like or set a proper p value. macs uses different thing for FDR and its possible only if using controls.
