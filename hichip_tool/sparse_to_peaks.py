@@ -53,7 +53,9 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     output_bedgraph =  os.path.join(output_dir, prefix + "bedgraph.bdg")
     bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph)
     
-
+    if keeptemp==True:
+        with open(os.path.join(output_dir, prefix + "peaks_variables.pi"),"wb") as picklefile:
+            pickle.dump([smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)    
 
 
     #peaks returned is just a list with 0 and 1. proper bed file is saved
