@@ -135,7 +135,7 @@ def quick_call(smoothed_diagonal):
 
     #quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
 
-    quick_peaks = [True if x < 0.00000001 else False for x in quick_p_vals] #seems to work better
+    quick_peaks = [True if x < 0.00001 else False for x in quick_p_vals] #seems to work better
     
     # matplotlib.pyplot.plot([1000 if x else 0 for x in quick_peaks])
     # matplotlib.pyplot.plot(smoothed_diagonal)
@@ -145,7 +145,7 @@ def quick_call(smoothed_diagonal):
 
 def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_lengths,max_interpolated,min_interpolated,diagonal_mean,size_function,mean_mode_diff,i):
     """parallel version of expected background"""
-    start_index , end_index = get_range(frag_prop,i,50000)
+    start_index , end_index = get_range(frag_prop,i,100000)
     local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
     local_length = group_lengths[i]
     if local_length > max_interpolated:
@@ -158,7 +158,7 @@ def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_
         return size_function(local_length) + mean_mode_diff
 
 def parallel_negative_binomial(expected_background,nb_n,smoothed_diagonal,site_index):
-    nb_p = nb_n/(expected_background[-1]+nb_n)
+    nb_p = nb_n/(expected_background[site_index]+nb_n)
     return scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) 
 
 
