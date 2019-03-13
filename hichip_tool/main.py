@@ -12,6 +12,7 @@ def main():
     import os
     import argparse
     import logging
+    import datetime
     ## here all inputs.
 
 
@@ -105,11 +106,15 @@ def main():
 
     #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
     #would still require the person to manually set design experiments and stuff.
-    import pickle
-    with open( prefix + "alldata.pickle","wb") as picklefile:
-        pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
+    # import pickle
+    # with open(os.path.join(output_dir,prefix + "alldata.pickle","wb")) as picklefile:
+    #     pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
 
 
+
+
+    logging.info(datetime.datetime.now())
+    logging.info("Done!")
 
 if __name__=="__main__":
     main()

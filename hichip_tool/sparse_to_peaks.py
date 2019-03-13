@@ -21,7 +21,7 @@ import multiprocessing
 import subprocess
 import matplotlib.pyplot
 import itertools
-import functools
+#import functools
 import logging
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.10,threads=4,keeptemp=False):
@@ -62,6 +62,8 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     #peaks returned is just a list with 0 and 1. proper bed file is saved
     return smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals
 
+
+
 def moving_integration (values, window):
     weights = numpy.repeat(1.0, window)
     sma = numpy.convolve(values, weights, 'same')
@@ -72,7 +74,7 @@ def moving_average (values, window):
     return sma
 
 def get_range(frag_prop, index, distance):
-    """finds the index ranges for a specified distance range, used to get the local average of noise"""
+    """THIS FUNCTION IS NOT USED finds the index ranges for a specified distance range, used to get the local average of noise"""
     chromosome = frag_prop[index][0]
     start = index
     end = index
@@ -98,7 +100,7 @@ def get_range(frag_prop, index, distance):
     return start, end
 
 def get_local_background(signal_list, smoothed_diagonal, start_index, end_index):
-    """gets local background around the start and end index"""
+    """THIS FUNCTION IS NOT USED gets local background around the start and end index"""
     background = 0
     used_sites = 0
     for i in range(start_index,end_index+1):
