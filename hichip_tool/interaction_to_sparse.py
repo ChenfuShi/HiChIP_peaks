@@ -22,6 +22,7 @@ import re
 import multiprocessing
 import subprocess
 import uuid
+import logging
 try:
     #this works only when installed
     from hichip_tool import helpers
@@ -41,19 +42,19 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
     if sizes!=None and not os.path.isfile(sizes) :
         raise Exception("annotation files couldn't be opened")
         
-    print("Loading experiment information and read pairs")
-    print("#######################################")
-    print("Start reading experiment information (restriction fragments and chromosomes)")
+    logging.info("Loading experiment information and read pairs")
+    logging.info("#######################################")
+    logging.info("Start reading experiment information (restriction fragments and chromosomes)")
 
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
-    print("#######################################")
-    print("Preparing HiC-Pro output for import")
+    logging.info("#######################################")
+    logging.info("Preparing HiC-Pro output for import")
 
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode,prefix)
 
-    print("#######################################")
-    print("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
+    logging.info("#######################################")
+    logging.info("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
 
     # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
@@ -69,11 +70,11 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
         os.remove(file_religation)
         os.remove(file_dangling)
 
-    print("#######################################")
-    print("Sparse matrix of experiment generated")
-    print("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
+    logging.info("#######################################")
+    logging.info("Sparse matrix of experiment generated")
+    logging.info("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
     if keeptemp == True:
-        print("Saving intermediate files for further use")
+        logging.info("Saving intermediate files for further use")
         scipy.sparse.save_npz(os.path.join(temporary_loc, prefix + "CSR_matrix.npz"), CSR_mat)
         with open(os.path.join(temporary_loc, prefix + "variables.pickle"),"wb") as picklefile:
             pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
@@ -216,6 +217,13 @@ if __name__=="__main__":
     # restriction fragment definitions
     # sizes of chromosomes just to get the right chromosomes
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s - %(message)s",
+        handlers=[
+        logging.StreamHandler()
+    ]
+    )
     folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
     resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
     sizes = None

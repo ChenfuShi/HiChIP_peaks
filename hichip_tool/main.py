@@ -11,6 +11,7 @@
 def main():
     import os
     import argparse
+    import logging
     ## here all inputs.
 
 
@@ -37,7 +38,7 @@ def main():
     args = parser.parse_args()
 
 
-
+    
 
 
     hicpro_results = os.path.abspath(args.hicpro_results)
@@ -51,9 +52,19 @@ def main():
     output_dir = os.path.abspath(args.output_directory)
     keeptemp = args.keeptemp
     threads=args.threads
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s - %(message)s",
+        handlers=[
+        logging.FileHandler("{0}/{1}.log".format(output_dir, prefix + "log.log"), mode="a"),
+        logging.StreamHandler()
+    ]
+    )
+
     if threads < 4:
         threads = 4 
-        print("Minimum threads is 4 !!")
+        logging.warning("Minimum threads is 4 !!")
     FDR=args.FDR
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
@@ -61,9 +72,9 @@ def main():
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
     os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
 
-    print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(hicpro_results,resfrag,sizes,temporary_loc))
-    print(" FDR: {}".format(FDR))
-    print(" Output directory: {} \n Keep temporary files?: {} \n Threads(minimum is 4): {}".format(output_dir,keeptemp,threads))
+    logging.info("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(hicpro_results,resfrag,sizes,temporary_loc))
+    logging.info(" FDR: {}".format(FDR))
+    logging.info(" Output directory: {} \n Keep temporary files?: {} \n Threads(minimum is 4): {}".format(output_dir,keeptemp,threads))
     
 
     #apparently moving this should make sure that number of threads is respected in numpy?
@@ -85,7 +96,8 @@ def main():
     #prepare quality metrics and print out to report file
 
 
-
+    #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
+    #would still require the person to manually set design experiments and stuff.
 
 
 
