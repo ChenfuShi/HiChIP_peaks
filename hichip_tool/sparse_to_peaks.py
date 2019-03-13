@@ -146,14 +146,15 @@ def quick_call(smoothed_diagonal):
 def parallel_expected_background(frag_prop,smoothed_diagonal,noise_filter,group_lengths,max_interpolated,min_interpolated,diagonal_mean,size_function,mean_mode_diff,i):
     """parallel version of expected background"""
     start_index , end_index = get_range(frag_prop,i,100000)
-    local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index)
+    #local_background = get_local_background(noise_filter,smoothed_diagonal,start_index,end_index) ##seems that whatever i do this always make it worse
+    local_background = 0
     local_length = group_lengths[i]
     if local_length > max_interpolated:
         local_length = max_interpolated-1
     if local_length < min_interpolated:
         local_length = min_interpolated+1
     if local_background > diagonal_mean:
-        return size_function(local_length) + mean_mode_diff + local_background - diagonal_mean
+        return size_function(local_length) + mean_mode_diff #+ local_background - diagonal_mean
     else:
         return size_function(local_length) + mean_mode_diff
 
