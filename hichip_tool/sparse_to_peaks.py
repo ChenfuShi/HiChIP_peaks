@@ -115,7 +115,7 @@ def get_local_background(signal_list, smoothed_diagonal, start_index, end_index)
 
 def extract_diagonal(CSR_mat,window):
     """extract the diagonal including the sum of the window in all directions"""
-    diagonal = CSR_mat.diagonal()/2 #check if this is making a problem. diagonal gets divided by two, but then the two off diagonals get used twice before and after. 
+    diagonal = CSR_mat.diagonal()#/2 #check if this is making a problem. diagonal gets divided by two, but then the two off diagonals get used twice before and after. 
     # maybe we should consider the diagonal twice? those are religation pairs. don't think it would make a massive difference but yeah check
     num_reads = sum(diagonal)
     if window == 0:
