@@ -72,10 +72,17 @@ def main():
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
     os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
 
-    logging.info("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(hicpro_results,resfrag,sizes,temporary_loc))
-    logging.info(" FDR: {}".format(FDR))
-    logging.info(" Output directory: {} \n Keep temporary files?: {} \n Threads(minimum is 4): {}".format(output_dir,keeptemp,threads))
-    
+    logging.info("Input variables")
+    logging.info("HiC-Pro data folder: {} ".format(hicpro_results))
+    logging.info("Restriction fragment file: {} ".format(resfrag))
+    logging.info("Chromosome annotation file: {} ".format(sizes))
+    logging.info("Temporary location: {} ".format(temporary_loc))
+    logging.info("FDR: {} ".format(FDR))
+    logging.info("Output directory: {} ".format(output_dir))
+    logging.info("Output name prefix: {} ".format(prefix))
+    logging.info("Keep temporary files?: {} ".format(keeptemp))
+    logging.info("Threads(minimum is 4): {} ".format(threads))
+
 
     #apparently moving this should make sure that number of threads is respected in numpy?
     try:
@@ -98,9 +105,9 @@ def main():
 
     #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
     #would still require the person to manually set design experiments and stuff.
-    # import pickle
-    # with open( prefix + "alldata.pickle","wb") as picklefile:
-    #     pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
+    import pickle
+    with open( prefix + "alldata.pickle","wb") as picklefile:
+        pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)
 
 
 

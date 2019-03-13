@@ -36,7 +36,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     diagonal , num_reads = extract_diagonal(CSR_mat,2)
     logging.info("Number of reads used in peak calling: {}".format(num_reads))
-    if num_reads < 20000000:
+    if num_reads < 30000000:
         logging.warning("WARNING: number of reads used for peak calling is very low. Consider doing more sequencing")
     smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3
 
