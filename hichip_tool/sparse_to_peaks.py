@@ -138,7 +138,7 @@ def quick_call(smoothed_diagonal):
 
     #quick_peaks, correct_q_vals = statsmodels.stats.multitest.fdrcorrection(quick_p_vals, alpha = 0.01)
 
-    quick_peaks = [True if x < 0.00001 else False for x in quick_p_vals] #seems to work better
+    quick_peaks = [True if x < 0.00000001 else False for x in quick_p_vals] #seems to work better
     
     # matplotlib.pyplot.plot([1000 if x else 0 for x in quick_peaks])
     # matplotlib.pyplot.plot(smoothed_diagonal)
