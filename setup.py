@@ -22,7 +22,7 @@ setup(name='hichip_tool',
     url='https://github.com/ChenfuShi/domain_caller_site',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',
-    license='MIT',
+    license='BSD',
     packages=['hichip_tool'],
     install_requires=[
         'scipy',
@@ -34,13 +34,25 @@ setup(name='hichip_tool',
         'console_scripts': 
         ['peak_call=hichip_tool.main:main',
         'make_bedgraph=hichip_tool.bedgraph:main',
-        'IPquality=hichip_tool.IPquality:main',
+        'diff_peaks=hichip_tool.diffpeaks:main',
 
         ],
     },
     python_requires='>=3.6',
-    zip_safe=False
-    
+    zip_safe=False,
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Natural Language :: English',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'License :: OSI Approved :: BSD License',
+        ],
     )
 
 

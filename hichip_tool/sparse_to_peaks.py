@@ -45,22 +45,22 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks , peak_p_vals , peaks_q_vals= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR,threads)
+    refined_peaks , peak_p_vals , peaks_q_vals, expected_background= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR,threads)
 
     logging.info("#######################################")
     logging.info("Writing peaks and bedgraph to output folder")
 
     output_bed = os.path.join(output_dir, prefix + "peaks.bed")
     output_bedgraph =  os.path.join(output_dir, prefix + "bedgraph.bdg")
-    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph)
+    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background)
     
     if keeptemp==True:
         with open(os.path.join(output_dir, prefix + "peaks_variables.pi"),"wb") as picklefile:
-            pickle.dump([smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals],picklefile)    
+            pickle.dump([smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals,expected_background],picklefile)    
 
 
     #peaks returned is just a list with 0 and 1. proper bed file is saved
-    return smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals
+    return smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background
 
 
 
@@ -328,11 +328,11 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
 
     if len(expected_background) != len(smoothed_diagonal) or len(smoothed_diagonal) != len(group_lengths) or len(refined_peaks) != len(group_lengths):
         raise Exception("something happened in the lengths of the various vectors")
-    return refined_peaks , nb_p_vals, nb_q_vals
+    return refined_peaks , nb_p_vals, nb_q_vals, expected_background
 
 
 
-def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph):
+def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background):
     """print out a bed file with refined peaks, also add as a score the fold change of the highest point"""
 
     with open(output_bed + ".temp", "w") as output_file:
@@ -340,7 +340,7 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_be
             if frag_prop[i-1][0] != frag_prop[i+1][0]:
                 continue
             if refined_peaks[i] == 1:
-                output_file.write("{}\t{}\t{}\t{}\t{:10.15f}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),smoothed_diagonal[i],-math.log10(peak_p_vals[i])))
+                output_file.write("{}\t{}\t{}\t{}\t{:10.15f}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),max(smoothed_diagonal[i]-expected_background[i],0),-math.log10(peak_p_vals[i])))
     bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4,4,5 -o mean,max,max> " + output_bed 
     subprocess.check_call(bedmerge_command ,shell=True)
     os.remove(output_bed + ".temp")
@@ -369,7 +369,7 @@ if __name__=="__main__":
     with open("../domain_caller_site/testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals = sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",threads=6)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",threads=6)
 
 
     with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
