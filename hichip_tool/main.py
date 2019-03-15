@@ -13,6 +13,7 @@ def main():
     import argparse
     import logging
     import datetime
+    import pickle
     ## here all inputs.
 
 
@@ -36,6 +37,8 @@ def main():
                         help="Number of threads, minimum 4")
     parser.add_argument("-k", "--keep_temp", dest="keeptemp",action="store_true", default=False,
                         help="Keep temporary files")
+    parser.add_argument("-d", "--keep_diff", dest="keepdiff",action="store_true", default=False,
+                        help="Prepare files for differential analysis")
     args = parser.parse_args()
 
 
@@ -52,8 +55,9 @@ def main():
         temporary_loc = os.path.abspath(args.temporary_loc)
     output_dir = os.path.abspath(args.output_directory)
     keeptemp = args.keeptemp
+    keepdiff = args.keepdiff
     threads=args.threads
-
+    FDR=args.FDR
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
@@ -66,7 +70,12 @@ def main():
     if threads < 4:
         threads = 4 
         logging.warning("Minimum threads is 4 !!")
-    FDR=args.FDR
+
+    if keepdiff == True:
+        if prefix == "hichip_tool_":
+            logging.error("To be able to use the differential peak test you need to supply a prefix/name for the sample")
+            raise Exception("To be able to use the differential peak test you need to supply a prefix/name for the sample")
+
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
     os.environ["MKL_NUM_THREADS"] = str(threads)
@@ -104,9 +113,16 @@ def main():
     #prepare quality metrics and print out to report file
 
 
+    #save files for differential peak analysis
+    if keepdiff == True:
+        with open(os.path.join(output_dir,prefix + "diffpeak_data.pickle"),"wb") as picklefile:
+            pickle.dump([smoothed_diagonal,refined_peaks,expected_background],picklefile)
+    
+
+
     #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
     #would still require the person to manually set design experiments and stuff.
-    import pickle
+
     with open(os.path.join(output_dir,prefix + "alldata.pickle"),"wb") as picklefile:
         pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals,expected_background],picklefile)
 

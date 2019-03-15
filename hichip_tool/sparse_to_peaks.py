@@ -52,7 +52,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
 
     output_bed = os.path.join(output_dir, prefix + "peaks.bed")
     output_bedgraph =  os.path.join(output_dir, prefix + "bedgraph.bdg")
-    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background)
+    bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background,keeptemp)
     
     if keeptemp==True:
         with open(os.path.join(output_dir, prefix + "peaks_variables.pi"),"wb") as picklefile:
@@ -332,7 +332,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
 
 
 
-def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background):
+def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_bed,output_bedgraph,expected_background,keeptemp):
     """print out a bed file with refined peaks, also add as a score the fold change of the highest point"""
 
     with open(output_bed + ".temp", "w") as output_file:
@@ -343,7 +343,8 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_be
                 output_file.write("{}\t{}\t{}\t{}\t{:10.15f}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),max(smoothed_diagonal[i]-expected_background[i],0),-math.log10(peak_p_vals[i])))
     bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4,4,5 -o mean,max,max> " + output_bed 
     subprocess.check_call(bedmerge_command ,shell=True)
-    os.remove(output_bed + ".temp")
+    if keeptemp == False:
+        os.remove(output_bed + ".temp")
 
     with open(output_bedgraph, "w") as bdg_file:
         for i in range(1,len(smoothed_diagonal)-1):

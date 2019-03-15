@@ -9,7 +9,7 @@
 #########################################
 def main():
     import os, sys
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
     try:
         #this works only when installed
         from hichip_tool import interaction_to_sparse,sparse_to_peaks
