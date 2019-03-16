@@ -12,9 +12,21 @@
 # number of peaks
 #########################################
 
+import os, sys
+import matplotlib.pyplot
+import matplotlib.backends.backend_pdf
+import scipy
+import scipy.sparse, scipy.stats
+import numpy
 
-
-def quality_report(np_p_vals, smoothed_diagonal, ):
+def quality_report(np_p_vals, smoothed_diagonal, output_dir, prefix):
     """takes all useful data and generates a good report"""
 
+    pdf = matplotlib.backends.backend_pdf.PdfPages(os.path.join(output_dir, prefix + "report.pdf"))
+
+
+
+
+
+    pdf.close()
     return None

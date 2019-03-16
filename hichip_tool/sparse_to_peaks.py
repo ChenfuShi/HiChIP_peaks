@@ -34,11 +34,11 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     logging.info("#######################################")
     logging.info("Extracting pairs for ChIP peaks calling")
 
-    diagonal , num_reads = extract_diagonal(CSR_mat,2)
+    diagonal , num_reads = extract_diagonal(CSR_mat,2) #off diag here
     logging.info("Number of reads used in peak calling: {}".format(num_reads))
     if num_reads < 30000000:
         logging.warning("WARNING: number of reads used for peak calling is very low. Consider doing more sequencing")
-    smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3
+    smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3 smoothing factor
 
     logging.info("#######################################")
     logging.info("Identifying high confidence peaks to remove them from background modelling")
@@ -124,7 +124,7 @@ def extract_diagonal(CSR_mat,window):
         return numpy.array(diagonal),num_reads
     for i in range(1,window+1):
         off_diagonal = CSR_mat.diagonal(k=i).tolist()
-        num_reads += sum(off_diagonal)
+        num_reads += sum(off_diagonal)*2
         diagonal = [sum(x) for x in zip(diagonal, [0]*i + off_diagonal, off_diagonal + [0]*i)]
     return numpy.array(diagonal),num_reads
 
@@ -199,7 +199,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
     logging.info("Model background noise as a negative binomial")
 
     lengths = [x[3] for x in frag_prop] 
-    group_lengths = moving_integration(lengths, 2)  ###changed to 2, so the 2 fragments within
+    group_lengths = moving_integration(lengths, 2)  ###changed to 2, so the 2 fragments within, probably should calculate it from the window used to do the smoothing
     min_allowed_size = math.floor(numpy.percentile(group_lengths, 1))
     max_allowed_size = math.floor(numpy.percentile(group_lengths, 99))
     # add 1s to quick peaks to exclude them from the noise modelling
