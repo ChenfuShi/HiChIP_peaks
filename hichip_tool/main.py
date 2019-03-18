@@ -22,7 +22,7 @@ def main():
     parser.add_argument("-i", "--input", dest="hicpro_results",action="store",required=True,
                         help="HiC-Pro results directory containing validPairs file and others")
     parser.add_argument("-o", "--output", dest="output_directory",action="store",required=True,
-                        help="Output file, will write temporary files in that directory")
+                        help="Output directory")
     parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
                         help="HiCpro resfrag file")
     parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default=None,
