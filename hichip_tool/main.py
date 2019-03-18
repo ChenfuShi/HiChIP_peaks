@@ -25,10 +25,10 @@ def main():
                         help="Output file, will write temporary files in that directory")
     parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
                         help="HiCpro resfrag file")
-    parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default="hichip_tool_",
-                        help="Output file name prefix")
+    parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default=None,
+                        help="Output file name prefix, if not provided will be name of HiC-Pro results directory")
     parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.10, type=float,
-                        help="False discovery rate, default = 0.01")                        
+                        help="False discovery rate, default = 0.10")                        
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
                         help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
     parser.add_argument("-t", "--temporary_loc", dest="temporary_loc",action="store",required=False, default=None,
@@ -66,15 +66,13 @@ def main():
         logging.StreamHandler()
     ]
     )
-
+    if prefix == None:
+        prefix = os.path.basename(os.path.dirname(hicpro_results))
     if threads < 4:
         threads = 4 
         logging.warning("Minimum threads is 4 !!")
 
-    if keepdiff == True:
-        if prefix == "hichip_tool_":
-            logging.error("To be able to use the differential peak test you need to supply a prefix/name for the sample")
-            raise Exception("To be able to use the differential peak test you need to supply a prefix/name for the sample")
+
 
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
