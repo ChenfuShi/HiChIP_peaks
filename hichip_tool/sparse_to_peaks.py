@@ -23,6 +23,7 @@ import matplotlib.pyplot
 import itertools
 #import functools
 import logging
+import pickle
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.10,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""

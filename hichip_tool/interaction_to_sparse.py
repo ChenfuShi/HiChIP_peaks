@@ -23,6 +23,7 @@ import multiprocessing
 import subprocess
 import uuid
 import logging
+import pickle
 try:
     #this works only when installed
     from hichip_tool import helpers
