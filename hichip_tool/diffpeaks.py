@@ -34,7 +34,7 @@ def main():
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
                         help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
 
-    parser.add_argument("-m", "--minimum", dest="minimum",action="store",required=True,type=int,default=1,
+    parser.add_argument("-m", "--minimum", dest="minimum",action="store",required=False,type=int,default=1,
                         help="How many samples need to be peak to be considered peak for analysis")          
 
 
@@ -45,7 +45,7 @@ def main():
     hichip_tool_results = os.path.abspath(args.hichip_tool_results)
     resfrag = os.path.abspath(args.resfrag)
     sizes = args.sizes
-    output_file = os.path.abspath(args.output_directory)
+    output_file = os.path.abspath(args.output_file)
 
     minimum_coverage = args.minimum
 
