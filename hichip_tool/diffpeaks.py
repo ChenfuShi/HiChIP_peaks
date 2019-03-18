@@ -120,7 +120,7 @@ def main():
     #     background_weight.append(expected_background[peak[0]:peak[1]].sum())
 
     peaks_dict = {}
-    for i in range(5):
+    for i in range(len(peaks)):
         peak_id = "peak_" + str(i)
         peak_location = frag_prop[peaks[i][0]][0] + ":" + str(math.floor((frag_prop[peaks[i][0]-1][1]+frag_prop[peaks[i][0]-1][2])/2))+"-"+str(math.floor((frag_prop[peaks[i][1]][1]+frag_prop[peaks[i][1]][2])/2))
         weigths = []
@@ -131,7 +131,7 @@ def main():
     peaks_df=pandas.DataFrame.from_dict(peaks_dict, orient="index")
     peaks_df.columns = ["peak_location"] + names
 
-
+    print("writing the peaks weights to {}".format(output_file))
     peaks_df.to_csv(output_file)
 
 
