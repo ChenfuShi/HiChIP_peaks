@@ -82,6 +82,8 @@ def main():
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
     os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
 
+    logging.info("Welcome to my software!")
+    logging.info(datetime.datetime.now())
     logging.info("Input variables")
     logging.info("HiC-Pro data folder: {} ".format(hicpro_results))
     logging.info("Restriction fragment file: {} ".format(resfrag))
