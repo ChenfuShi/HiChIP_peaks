@@ -61,6 +61,8 @@ def main():
 
     if prefix == None:
         prefix = os.path.basename(hicpro_results)
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
