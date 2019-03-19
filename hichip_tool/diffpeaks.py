@@ -73,7 +73,7 @@ def main():
     input_refined_peaks = []
 
     for current_file in input_files:
-        with open(current_file, "rb") as current_pickle:
+        with open(os.path.join(hichip_tool_results,current_file), "rb") as current_pickle:
             current_smoothed_diagonal, current_refined_peaks, current_background=pickle.load(current_pickle)
         input_smoothed_diagonals.append(current_smoothed_diagonal.copy())
         input_backgrounds.append(current_background.copy())
