@@ -60,7 +60,7 @@ def main():
     FDR=args.FDR
 
     if prefix == None:
-        prefix = os.path.basename(os.path.dirname(hicpro_results))
+        prefix = os.path.basename(hicpro_results)
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
