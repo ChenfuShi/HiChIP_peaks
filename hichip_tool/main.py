@@ -58,6 +58,9 @@ def main():
     keepdiff = args.keepdiff
     threads=args.threads
     FDR=args.FDR
+
+    if prefix == None:
+        prefix = os.path.basename(os.path.dirname(hicpro_results))
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
@@ -65,9 +68,8 @@ def main():
         logging.FileHandler("{0}/{1}.log".format(output_dir, prefix + "log"), mode="a"),
         logging.StreamHandler()
     ]
-    )
-    if prefix == None:
-        prefix = os.path.basename(os.path.dirname(hicpro_results))
+    )    
+    
     if threads < 4:
         threads = 4 
         logging.warning("Minimum threads is 4 !!")
