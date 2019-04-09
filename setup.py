@@ -6,6 +6,9 @@
 
 #########################################
 
+# to install without copying files
+# pip install -e .
+
 version=0.1
 
 with open("README.md", "r") as fh:
