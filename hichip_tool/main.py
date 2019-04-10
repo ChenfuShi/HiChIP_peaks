@@ -39,6 +39,8 @@ def main():
                         help="Keep temporary files")
     parser.add_argument("-d", "--keep_diff", dest="keepdiff",action="store_true", default=False,
                         help="Prepare files for differential analysis")
+    parser.add_argument("-s", "--offdiag", dest="off_diag",action="store",required=False, type=int, default=2,
+                        help="How many off diagonal needs to be included")
     args = parser.parse_args()
 
 
@@ -58,7 +60,7 @@ def main():
     keepdiff = args.keepdiff
     threads=args.threads
     FDR=args.FDR
-
+    off_diag = args.off_diag
     if prefix == None:
         prefix = os.path.basename(hicpro_results)
     if not os.path.isdir(output_dir):
@@ -92,6 +94,7 @@ def main():
     logging.info("Chromosome annotation file: {} ".format(sizes))
     logging.info("Temporary location: {} ".format(temporary_loc))
     logging.info("FDR: {} ".format(FDR))
+    logging.info("Distance from diagonal included: {} ".format(off_diag))
     logging.info("Output directory: {} ".format(output_dir))
     logging.info("Output name prefix: {} ".format(prefix))
     logging.info("Keep temporary files?: {} ".format(keeptemp))
@@ -109,7 +112,7 @@ def main():
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,prefix,keeptemp=keeptemp)
 
 
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=FDR,threads=threads,keeptemp=keeptemp)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
 
     #do ip efficiency

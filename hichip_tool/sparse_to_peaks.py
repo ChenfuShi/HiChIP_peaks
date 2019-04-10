@@ -25,7 +25,7 @@ import itertools
 import logging
 import pickle
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,FDR=0.10,threads=4,keeptemp=False):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=0.10,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons"""
 
     if not os.path.isdir(output_dir):
@@ -35,18 +35,18 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     logging.info("#######################################")
     logging.info("Extracting pairs for ChIP peaks calling")
 
-    diagonal , num_reads = extract_diagonal(CSR_mat,2) #off diag here
+    diagonal , num_reads = extract_diagonal(CSR_mat,off_diag) #off diag here
     logging.info("Number of reads used in peak calling: {}".format(num_reads))
     if num_reads < 30000000:
         logging.warning("WARNING: number of reads used for peak calling is very low. Consider doing more sequencing")
-    smoothed_diagonal = numpy.rint(moving_integration(diagonal,3)).astype(int) #### changed to 3 smoothing factor
+    smoothed_diagonal = numpy.rint(moving_integration(diagonal,((off_diag-1)*2)+1)).astype(int) #### changed to 3 smoothing factor, it is one less than the number of off sites
 
     logging.info("#######################################")
     logging.info("Identifying high confidence peaks to remove them from background modelling")
 
     quick_peaks = quick_call(smoothed_diagonal)
 
-    refined_peaks , peak_p_vals , peaks_q_vals, expected_background= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR,threads)
+    refined_peaks , peak_p_vals , peaks_q_vals, expected_background= refined_call(smoothed_diagonal,quick_peaks,frag_prop,FDR,off_diag,threads)
 
     logging.info("#######################################")
     logging.info("Writing peaks and bedgraph to output folder")
@@ -192,7 +192,7 @@ def parallel_negative_binomial(expected_background,nb_n,smoothed_diagonal,site_i
 
 
 
-def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
+def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,off_diag,threads):
     """use previous peaks to refine model and then call peaks. creates a list with expected noise based on measures. poisson distribution won't work, need to increase variance.
     then clean up isolated stuff and return peaks"""
 
@@ -200,7 +200,7 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,threads):
     logging.info("Model background noise as a negative binomial")
 
     lengths = [x[3] for x in frag_prop] 
-    group_lengths = moving_integration(lengths, 2)  ###changed to 2, so the 2 fragments within, probably should calculate it from the window used to do the smoothing
+    group_lengths = moving_integration(lengths, (off_diag-1)*2)  ###changed to 2, so the 2 fragments within the smoothing factor, calculate it from the window used to do the smoothing
     min_allowed_size = math.floor(numpy.percentile(group_lengths, 1))
     max_allowed_size = math.floor(numpy.percentile(group_lengths, 99))
     # add 1s to quick peaks to exclude them from the noise modelling
@@ -371,7 +371,7 @@ if __name__=="__main__":
     with open("../domain_caller_site/testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",threads=6)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",2,threads=6)
 
 
     with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
