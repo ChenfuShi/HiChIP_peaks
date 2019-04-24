@@ -4,7 +4,7 @@
 
 
 # makes bedgraphs from scratch
-
+# bedgraphs are generated from the peak calling. also these bedgraphs are slightly different. you can set smoothing factor and offdiag factor separately.
 
 #########################################
 def main():

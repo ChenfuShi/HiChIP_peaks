@@ -26,7 +26,14 @@ import logging
 import pickle
 
 def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=0.10,threads=4,keeptemp=False):
-    """Wrapper function to call individual funcitons"""
+    """Wrapper function to call individual funcitons
+    smoothed_diagonal : (list) that contains the number of reads from the diagonal + n off_diags and then is smoothed using the moving integration
+    refined_peaks : (list) peaks output from the negative binomial model
+    quick_peaks : (list) peaks output from the poisson model
+    peak_p_vals : (list) p values for each restriction site
+    peaks_q_vals : (list) q, corrected p values for each restriction site
+    expected_background: (list) expected background for each site calculated using negative binomial model and restriction fragment size bias
+    """
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)

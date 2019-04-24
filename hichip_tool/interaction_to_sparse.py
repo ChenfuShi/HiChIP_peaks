@@ -32,7 +32,16 @@ except:
 
 
 def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
-    """Wrapper function to call individual funcitons"""
+    """Wrapper function to call individual funcitons
+    CSR_mat: (scipy.sparse.matrix) sparse matrix format of the interaction matrix at a restriction site. All reads are assigned to restriction site based on directionality. the size is the same as the number of restriction FRAGMENTS.
+    so it misses the last restriction site
+    frag_index: (list) dictionary with all the frag names to frag index. fragment n contains site n and n+1. site n has fragment n-1 and fragment n.
+    frag_prop: (list:tuple) the list of fragments with tuple with (chr, start, end , length) of each frag
+    frag_amount: (dict) number of fragments in each chromosome as a dictionary
+    valid_chroms: (list) list of valid chromosomes
+    chroms_offsets: (dict) offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. n contains referes to site that has last/first site of chromosomes and site 1 of chromosome
+    if i call site n that is the site that has both the last of the last chromosome and the start of the new one. it is not really a site because it's just the end and start bp of chromosome. note that whatever you do these sites do not mean anything for further analysis
+    """
     # check inputs
     if not os.path.isdir(temporary_loc):
         os.makedirs(temporary_loc)
