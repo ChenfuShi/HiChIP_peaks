@@ -104,20 +104,18 @@ def main():
     #apparently moving this should make sure that number of threads is respected in numpy?
     try:
         #this works only when installed
-        from hichip_tool import interaction_to_sparse,sparse_to_peaks
+        from hichip_tool import interaction_to_sparse,sparse_to_peaks, quality_report
     except:
         import interaction_to_sparse 
         import sparse_to_peaks
+        import quality_report
     
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,prefix,keeptemp=keeptemp)
 
 
     smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
-
-    #do ip efficiency
-
-    #prepare quality metrics and print out to report file
+    quality_report.quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix)
 
 
     #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
@@ -129,9 +127,9 @@ def main():
     
 
 
-    # only for test and development purposes
-    with open(os.path.join(output_dir,prefix + "alldata.pickle"),"wb") as picklefile:
-        pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals,expected_background],picklefile)
+    # # only for test and development purposes
+    # with open(os.path.join(output_dir,prefix + "alldata.pickle"),"wb") as picklefile:
+    #     pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals,expected_background],picklefile)
 
 
 

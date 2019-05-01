@@ -349,7 +349,7 @@ def bed_printout(frag_prop,smoothed_diagonal,refined_peaks,peak_p_vals,output_be
                 continue
             if refined_peaks[i] == 1:
                 output_file.write("{}\t{}\t{}\t{}\t{:10.15f}\n".format(frag_prop[i-1][0],math.floor((frag_prop[i-1][2]+frag_prop[i-1][1])/2),math.floor((frag_prop[i][2]+frag_prop[i][1])/2),max(smoothed_diagonal[i]-expected_background[i],0),-math.log10(peak_p_vals[i])))
-    bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4,4,5 -o mean,max,max> " + output_bed 
+    bedmerge_command = "bedtools merge -i " + output_bed + ".temp -c 4,4,5 -o mean,max,max > " + output_bed 
     subprocess.check_call(bedmerge_command ,shell=True)
     if keeptemp == False:
         os.remove(output_bed + ".temp")

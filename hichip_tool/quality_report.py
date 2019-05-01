@@ -19,13 +19,52 @@ import scipy
 import scipy.sparse, scipy.stats
 import numpy
 
-def quality_report(np_p_vals, smoothed_diagonal, output_dir, prefix):
+def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix):
     """takes all useful data and generates a good report"""
 
     pdf = matplotlib.backends.backend_pdf.PdfPages(os.path.join(output_dir, prefix + "report.pdf"))
+    #basic numbers info
+    fig, ax = matplotlib.pyplot.subplots(figsize=(9,5))
+    ax = fig.add_subplot(111)
+    ax.axis("off")
+    ax.text(0.5, 0.95, 'Thank you for using my software',
+            horizontalalignment='center',
+            verticalalignment='center',
+        fontsize=18)
+    num_reads = round(sum(smoothed_diagonal)/3)
+    ax.text(0.5, 0.7, 'Number of reads used for peak calling : {}'.format(num_reads),
+            horizontalalignment='center',
+            verticalalignment='center',
+        fontsize=16)
+
+    num_lines = sum(1 for line in open(os.path.join(output_dir, prefix + "peaks.bed")))
+    ax.text(0.5, 0.5, 'Number of peaks called : {}'.format(num_lines),
+            horizontalalignment='center',
+            verticalalignment='center',
+        fontsize=16)
+
+    num_reads_in_peaks=round(sum([x for x,y in zip(smoothed_diagonal, refined_peaks) if y==1])/3)
+
+    ax.text(0.5, 0.3, 'Number of reads in peaks : {} ({:.2%})'.format(num_reads_in_peaks,num_reads_in_peaks/num_reads),
+            horizontalalignment='center',
+            verticalalignment='center',
+        fontsize=16)
 
 
+    pdf.savefig(fig)
 
+    #p value distribution
+    fig, ax = matplotlib.pyplot.subplots(figsize=(9,5))
+    ax = fig.add_subplot(111)
+    ax.spines["top"].set_visible(False)  
+    ax.spines["right"].set_visible(False)  
+    matplotlib.pyplot.title("Negative binomial test p-value distribution \nCheck for uniform distribution", fontsize=17)    
+    matplotlib.pyplot.ylabel("frequency", fontsize=14)
+    matplotlib.pyplot.xlabel("p-values", fontsize=14)
+    ax.tick_params(labelsize=13)
+    ax.hist(peak_p_vals, bins=20, range=(0,1),density=True,color="#3F5D7D")
+
+    pdf.savefig(fig)
 
 
     pdf.close()
