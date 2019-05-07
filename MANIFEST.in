@@ -1,0 +1,3 @@
+include hichip_tool/*txt
+include LICENSE
+include README.md

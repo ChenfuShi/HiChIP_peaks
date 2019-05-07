@@ -6,7 +6,8 @@
 # Function to convert files from HiC-Pro results to a sparse matrix at a restriction site resolution
 # restriction site is basically offset by 1. Fragment 0 has restriction site 0 and 1. last fragment will have only 5' but not 3'because that would create an extra index.
 # now this will get assigned wrongly the the first and last fragment of the chromosome
-# this way number of fragments is the same as number of sites and it doens't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
+# to get the real bp location of the restriction site you can use frag_prop[i][1]
+# this way number of fragments is the same as number of sites and it doesn't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
     # add: sanity checking all inputs # DONE
     # change temp filename so it's always unique and also do cleanup at the end #DONE
     # create directories when needed # DONE
@@ -21,31 +22,49 @@ import re
 import multiprocessing
 import subprocess
 import uuid
+import logging
+import pickle
+try:
+    #this works only when installed
+    from hichip_tool import helpers
+except:
+    import helpers 
 
-def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
-    """Wrapper function to call individual funcitons"""
+
+def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,tempcode=str(uuid.uuid4())[0:5]):
+    """Wrapper function to call individual funcitons
+    CSR_mat: (scipy.sparse.matrix) sparse matrix format of the interaction matrix at a restriction site. All reads are assigned to restriction site based on directionality. the size is the same as the number of restriction FRAGMENTS.
+    so it misses the last restriction site
+    frag_index: (list) dictionary with all the frag names to frag index. fragment n contains site n and n+1. site n has fragment n-1 and fragment n.
+    frag_prop: (list:tuple) the list of fragments with tuple with (chr, start, end , length) of each frag
+    frag_amount: (dict) number of fragments in each chromosome as a dictionary
+    valid_chroms: (list) list of valid chromosomes
+    chroms_offsets: (dict) offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. n contains referes to site that has last/first site of chromosomes and site 1 of chromosome
+    if i call site n that is the site that has both the last of the last chromosome and the start of the new one. it is not really a site because it's just the end and start bp of chromosome. note that whatever you do these sites do not mean anything for further analysis
+    """
     # check inputs
     if not os.path.isdir(temporary_loc):
         os.makedirs(temporary_loc)
     if not os.path.isdir(folder):
         raise Exception("couldn't find folder containing HiC-Pro results")
-    if not os.path.isfile(sizes) or not os.path.isfile(resfrag):
+    if not os.path.isfile(resfrag):
         raise Exception("annotation files couldn't be opened")
-
-    print("Loading experiment information and read pairs")
-    #print("Info: \n HiC-Pro data folder: {} \n Restriction fragment file: {} \n Chromosome annotation file: {} \n Temporary location: {}".format(folder,resfrag,sizes,temporary_loc))
-    print("#######################################")
-    print("Start reading experiment information (restriction fragments and chromosomes)")
+    if sizes!=None and not os.path.isfile(sizes) :
+        raise Exception("annotation files couldn't be opened")
+        
+    logging.info("Loading experiment information and read pairs")
+    logging.info("#######################################")
+    logging.info("Start reading experiment information (restriction fragments and chromosomes)")
 
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
-    print("#######################################")
-    print("Preparing HiC-Pro output for import")
+    logging.info("#######################################")
+    logging.info("Preparing HiC-Pro output for import")
 
-    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode)
+    file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode,prefix)
 
-    print("#######################################")
-    print("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
+    logging.info("#######################################")
+    logging.info("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
 
     # make the sparse matrix. sends a file at a time and adds stuff to the matrix
     coo_data = []
@@ -61,15 +80,19 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,keeptemp=False,tempcode=
         os.remove(file_religation)
         os.remove(file_dangling)
 
-    print("#######################################")
-    print("Sparse matrix of experiment generated")
-    print("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
-
+    logging.info("#######################################")
+    logging.info("Sparse matrix of experiment generated")
+    logging.info("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
+    if keeptemp == True:
+        logging.info("Saving intermediate files for further use")
+        scipy.sparse.save_npz(os.path.join(temporary_loc, prefix + "CSR_matrix.npz"), CSR_mat)
+        with open(os.path.join(temporary_loc, prefix + "variables.pickle"),"wb") as picklefile:
+            pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
     return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets
 
 
 
-def Prepare_files(folder,temporary_loc,tempcode):
+def Prepare_files(folder,temporary_loc,tempcode,prefix):
     """Find out files in folder remove duplicates and return variables locating files. If present merge files"""
 
 
@@ -88,22 +111,20 @@ def Prepare_files(folder,temporary_loc,tempcode):
 
     regex = re.compile(".*SCPairs")
     list_self_circle = list(filter(regex.match, files))
-    file_self_circle = os.path.join(temporary_loc, tempcode + "SCPairs")
+    file_self_circle = os.path.join(temporary_loc, prefix + tempcode + "SCPairs")
 
     regex = re.compile(".*DEPairs")
     list_dangling = list(filter(regex.match, files))
-    file_dangling = os.path.join(temporary_loc, tempcode + "DEPairs")
+    file_dangling = os.path.join(temporary_loc, prefix + tempcode + "DEPairs")
 
     regex = re.compile(".*REPairs")
     list_religation = list(filter(regex.match, files))
-    file_religation = os.path.join(temporary_loc, tempcode + "REPairs")
+    file_religation = os.path.join(temporary_loc, prefix + tempcode + "REPairs")
 
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
 
-    #############################################################################################################################################
-    #############################################################################################################################################
-    #############################################################################################################################################
+
     shcommands = []
     for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
         command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
@@ -126,12 +147,17 @@ def Read_resfrag(resfrag,sizes):
     # frag_prop the list of fragments with tuple with chr, start and end and length of each frag
     # list of valid chromosomes
     # offsets used for the sparse matrix implementation, not used anymore there, bust might still be useful
-    with open(sizes,"r") as file_sizes:
-        valid_chroms=[]
-        for line in file_sizes:
-            valid_chroms.append(line.split("\t")[0])
-
-    with open(resfrag,"r") as file_resfrag:
+    if sizes==None:
+        valid_chroms=['chr1', 'chr2', 'chr3', 'chr4', 'chr5',
+                    'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15',
+                    'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22']
+    else:
+        with open(sizes,"r") as file_sizes:
+            valid_chroms=[]
+            for line in file_sizes:
+                valid_chroms.append(line.split("\t")[0])
+    
+    with helpers.open_by_suffix(resfrag) as file_resfrag:
         frag_name=[]
         frag_prop=[]
         frag_amount={}
@@ -201,12 +227,19 @@ if __name__=="__main__":
     # restriction fragment definitions
     # sizes of chromosomes just to get the right chromosomes
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s - %(message)s",
+        handlers=[
+        logging.StreamHandler()
+    ]
+    )
     folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
     resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
-    sizes = os.path.abspath("./annotations/hg38.txt")
+    sizes = None
     temporary_loc = os.path.abspath("./../domain_caller/testdata")
 
-    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc)
+    CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,"testdata")
 
     scipy.sparse.save_npz('./testdata/sparse_matrix.npz', CSR_mat)
     with open("./testdata/variables.pi","wb") as picklefile:
