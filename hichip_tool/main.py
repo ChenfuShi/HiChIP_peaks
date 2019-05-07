@@ -27,8 +27,8 @@ def main():
                         help="HiCpro resfrag file")
     parser.add_argument("-p", "--prefix", dest="prefix",action="store",required=False, default=None,
                         help="Output file name prefix, if not provided will be name of HiC-Pro results directory")
-    parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.10, type=float,
-                        help="False discovery rate, default = 0.10")                        
+    parser.add_argument("-f", "--FDR", dest="FDR",action="store",required=False, default=0.01, type=float,
+                        help="False discovery rate, default = 0.01")                        
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
                         help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
     parser.add_argument("-t", "--temporary_loc", dest="temporary_loc",action="store",required=False, default=None,
@@ -40,7 +40,7 @@ def main():
     parser.add_argument("-d", "--keep_diff", dest="keepdiff",action="store_true", default=False,
                         help="Prepare files for differential analysis")
     parser.add_argument("-s", "--offdiag", dest="off_diag",action="store",required=False, type=int, default=2,
-                        help="How many off diagonal needs to be included")
+                        help="How many off diagonal needs to be included (default = 2)")
     args = parser.parse_args()
 
 
