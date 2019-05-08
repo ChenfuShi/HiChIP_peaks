@@ -52,7 +52,7 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
             verticalalignment='center',
         fontsize=16)
 
-    matplotlib.pyplot.axis('off')
+    ax.axis("off")
     pdf.savefig(fig)
 
     #p value distribution
