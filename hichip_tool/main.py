@@ -115,6 +115,8 @@ def main():
 
     smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
+    logging.info("#######################################")
+    logging.info("Creating report with summary statistics")
     quality_report.quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix)
 
 
@@ -122,6 +124,8 @@ def main():
     #would still require the person to manually set design experiments and stuff.
     #save files for differential peak analysis
     if keepdiff == True:
+        logging.info("#######################################")
+        logging.info("Saving file for differential peak analysis")
         with open(os.path.join(output_dir,prefix + "diffpeak_data.pickle"),"wb") as picklefile:
             pickle.dump([smoothed_diagonal,refined_peaks,expected_background],picklefile)
     

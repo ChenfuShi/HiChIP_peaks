@@ -21,7 +21,9 @@ import numpy
 
 def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix):
     """takes all useful data and generates a good report"""
-
+    #compatibility with no X display
+    matplotlib.pyplot.switch_backend('agg')
+    
     pdf = matplotlib.backends.backend_pdf.PdfPages(os.path.join(output_dir, prefix + "report.pdf"))
     #basic numbers info
     fig, ax = matplotlib.pyplot.subplots(figsize=(9,5))
