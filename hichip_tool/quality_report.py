@@ -18,6 +18,7 @@ import matplotlib.backends.backend_pdf
 import scipy
 import scipy.sparse, scipy.stats
 import numpy
+import logging
 
 def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix):
     """takes all useful data and generates a good report"""
@@ -27,8 +28,6 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
     pdf = matplotlib.backends.backend_pdf.PdfPages(os.path.join(output_dir, prefix + "report.pdf"))
     #basic numbers info
     fig, ax = matplotlib.pyplot.subplots(figsize=(9,5))
-    ax = fig.add_subplot(111)
-    ax.axis("off")
     ax.text(0.5, 0.95, 'Thank you for using my software',
             horizontalalignment='center',
             verticalalignment='center',
@@ -55,9 +54,16 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
     ax.axis("off")
     pdf.savefig(fig)
 
+    logging.info('Number of reads used for peak calling : {}'.format(num_reads))
+    logging.info('Number of peaks called : {}'.format(num_lines))
+    logging.info('Number of reads in peaks : {} ({:.2%})'.format(num_reads_in_peaks,num_reads_in_peaks/num_reads))
+
+
+
+
+
     #p value distribution
     fig2, ax2 = matplotlib.pyplot.subplots(figsize=(9,5))
-    ax2 = fig2.add_subplot(111)
     ax2.spines["top"].set_visible(False)  
     ax2.spines["right"].set_visible(False)  
     matplotlib.pyplot.title("Negative binomial test p-value distribution \nCheck for uniform distribution", fontsize=17)    
