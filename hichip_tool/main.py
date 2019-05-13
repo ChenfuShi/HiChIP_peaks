@@ -45,7 +45,7 @@ def main():
 
 
     
-
+    # parse arguments and check
 
     hicpro_results = os.path.abspath(args.hicpro_results)
     resfrag = os.path.abspath(args.resfrag)
@@ -110,8 +110,11 @@ def main():
         import sparse_to_peaks
         import quality_report
     
+    # call first function to create sparse matrix representation of hichip data
+
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,prefix,keeptemp=keeptemp)
 
+    # call peak calling algorithm
 
     smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=FDR,threads=threads,keeptemp=keeptemp)
 

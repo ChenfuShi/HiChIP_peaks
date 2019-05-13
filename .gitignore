@@ -2,6 +2,7 @@
 testdata/
 .vscode/
 build/
+tests/
 hichip_tool.egg-info/
 */__pycache__/
 __pycache__/
