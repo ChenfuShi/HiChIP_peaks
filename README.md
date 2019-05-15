@@ -1,4 +1,4 @@
-# domain_caller_site
+# HiChIP peaks
 
 This package can be used to find enriched peak regions from HiChIP datasets that can then be used as an input to available loop calling tools or to do differential peak analysis.
 
@@ -6,6 +6,7 @@ It takes the HiC-Pro output and converts it to a restriction site level resoluti
 The output is a list of peaks with their properties and a bedgraph at a restriction site level resolution that describes the reads per site.
 Using the differential analysis command it can be used to create a consensus peakset and then identify differentially bound regions across samples.
 
+Results from this package can then be used for further analysis and as a peaks dataset input for various loop calling software.
 
 ## Getting started
 
@@ -15,14 +16,14 @@ The package requires bedtools to run. The package can then be installed through 
 
 ```
 pip install bedtools
-pip install mypackage
+pip install hichip-peaks
 ```
 
 Or through bioconda
 
 ```
 conda install bedtools
-conda install mypackage
+conda install hichip-peaks
 ```
 
 We suggest using conda environments to avoid cluttering
@@ -100,10 +101,10 @@ The command requires that all the files in that folder are present, including th
 
 #### differential peak analysis
 
-Run the previous commands with the --keepdiff flag enabled. This will produce a temporary file that can be used with the diff_peaks  command to integrate all samples together. This utility will look for all the correct files in a folder, merge the peaks at a fragment site level a produce a table with the signal in each peak from each sample. This can then be imported in R or others and analysed using DESeq2 or other differential expression analysis tools. See example R script for inspiration.
+Run the previous commands with the --keepdiff flag enabled. This will produce a temporary file that can be used with the diff_peaks command to integrate all samples together. This utility will look for all the correct files in a specified folder, merge the peaks at a fragment site level a produce a table with the signal in each peak from each sample. This can then be imported in R or others and analysed using DESeq2 or other differential expression analysis tools. See example R script for inspiration.
 
 ```
-usage: diff_peaks [-h] -i HICHIP_TOOL_RESULTS -o OUTPUT_FILE -r RESFRAG
+usage: diff_peaks [-h] -i hichip-peaks_RESULTS -o OUTPUT_FILE -r RESFRAG
                   [-a SIZES] [-m MINIMUM]
 
 input directory with outputfiles from peak_call and create table for
@@ -111,7 +112,7 @@ differential analysis. Make sure to activate --keep_diff in the previous step!
 
 optional arguments:
   -h, --help            show this help message and exit
-  -i HICHIP_TOOL_RESULTS, --input HICHIP_TOOL_RESULTS
+  -i hichip-peaks_RESULTS, --input hichip-peaks_RESULTS
                         directory containing previous step results
   -o OUTPUT_FILE, --output OUTPUT_FILE
                         Output file

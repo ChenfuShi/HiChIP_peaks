@@ -12,7 +12,7 @@ def main():
 
     try:
         #this works only when installed
-        from hichip_tool import interaction_to_sparse,sparse_to_peaks
+        from hichip-peaks import interaction_to_sparse,sparse_to_peaks
     except:
         import interaction_to_sparse 
         import sparse_to_peaks
