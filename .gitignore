@@ -3,6 +3,6 @@ testdata/
 .vscode/
 build/
 tests/
-hichip_tool.egg-info/
+hichip_peaks.egg-info/
 */__pycache__/
 __pycache__/

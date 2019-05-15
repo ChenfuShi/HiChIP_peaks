@@ -17,14 +17,14 @@ def main():
     import math
     try:
         #this works only when installed
-        from hichip_tool import interaction_to_sparse,sparse_to_peaks
+        from hichip_peaks import interaction_to_sparse,sparse_to_peaks
     except:
         import interaction_to_sparse 
         import sparse_to_peaks
 
     parser = argparse.ArgumentParser(description="input directory with outputfiles from peak_call and create table for differential analysis. Make sure to activate --keep_diff in the previous step!")
 
-    parser.add_argument("-i", "--input", dest="hichip_tool_results",action="store",required=True,
+    parser.add_argument("-i", "--input", dest="hichip_peaks_results",action="store",required=True,
                         help="directory containing previous step results")
     parser.add_argument("-o", "--output", dest="output_file",action="store",required=True,
                         help="Output file")
@@ -42,14 +42,14 @@ def main():
     args = parser.parse_args()
 
 
-    hichip_tool_results = os.path.abspath(args.hichip_tool_results)
+    hichip_peaks_results = os.path.abspath(args.hichip_peaks_results)
     resfrag = os.path.abspath(args.resfrag)
     sizes = args.sizes
     output_file = os.path.abspath(args.output_file)
 
     minimum_coverage = args.minimum
 
-    if not os.path.isdir(hichip_tool_results):
+    if not os.path.isdir(hichip_peaks_results):
         raise Exception("couldn't find folder containing previous results")
     if not os.path.isfile(resfrag):
         raise Exception("annotation files couldn't be opened")
@@ -63,7 +63,7 @@ def main():
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = interaction_to_sparse.Read_resfrag(resfrag,sizes)
 
     # look for files in the input directory. this will specifically look for files ending with diffpeak_data.pickle
-    input_files = [fn for fn in os.listdir(hichip_tool_results) if fn.endswith("diffpeak_data.pickle")]
+    input_files = [fn for fn in os.listdir(hichip_peaks_results) if fn.endswith("diffpeak_data.pickle")]
     if len(input_files) < 2:
         raise Exception("Couldn't find at least 2 files for differential expression analysis in the input directory!")
     names = [i.replace("diffpeak_data.pickle","") for i in input_files]
@@ -73,7 +73,7 @@ def main():
     input_refined_peaks = []
 
     for current_file in input_files:
-        with open(os.path.join(hichip_tool_results,current_file), "rb") as current_pickle:
+        with open(os.path.join(hichip_peaks_results,current_file), "rb") as current_pickle:
             current_smoothed_diagonal, current_refined_peaks, current_background=pickle.load(current_pickle)
         input_smoothed_diagonals.append(current_smoothed_diagonal.copy())
         input_backgrounds.append(current_background.copy())
