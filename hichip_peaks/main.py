@@ -104,7 +104,7 @@ def main():
     #apparently moving this should make sure that number of threads is respected in numpy?
     try:
         #this works only when installed
-        from hichip-peaks import interaction_to_sparse,sparse_to_peaks, quality_report
+        from hichip_peaks import interaction_to_sparse,sparse_to_peaks, quality_report
     except:
         import interaction_to_sparse 
         import sparse_to_peaks

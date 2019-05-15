@@ -26,7 +26,7 @@ import logging
 import pickle
 try:
     #this works only when installed
-    from hichip-peaks import helpers
+    from hichip_peaks import helpers
 except:
     import helpers 
 

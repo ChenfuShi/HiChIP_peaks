@@ -16,14 +16,14 @@ The package requires bedtools to run. The package can then be installed through 
 
 ```
 pip install bedtools
-pip install hichip-peaks
+pip install hichip_peaks
 ```
 
 Or through bioconda
 
 ```
 conda install bedtools
-conda install hichip-peaks
+conda install hichip_peaks
 ```
 
 We suggest using conda environments to avoid cluttering
@@ -104,7 +104,7 @@ The command requires that all the files in that folder are present, including th
 Run the previous commands with the --keepdiff flag enabled. This will produce a temporary file that can be used with the diff_peaks command to integrate all samples together. This utility will look for all the correct files in a specified folder, merge the peaks at a fragment site level a produce a table with the signal in each peak from each sample. This can then be imported in R or others and analysed using DESeq2 or other differential expression analysis tools. See example R script for inspiration.
 
 ```
-usage: diff_peaks [-h] -i hichip-peaks_RESULTS -o OUTPUT_FILE -r RESFRAG
+usage: diff_peaks [-h] -i hichip_peaks_RESULTS -o OUTPUT_FILE -r RESFRAG
                   [-a SIZES] [-m MINIMUM]
 
 input directory with outputfiles from peak_call and create table for
@@ -112,7 +112,7 @@ differential analysis. Make sure to activate --keep_diff in the previous step!
 
 optional arguments:
   -h, --help            show this help message and exit
-  -i hichip-peaks_RESULTS, --input hichip-peaks_RESULTS
+  -i hichip_peaks_RESULTS, --input hichip_peaks_RESULTS
                         directory containing previous step results
   -o OUTPUT_FILE, --output OUTPUT_FILE
                         Output file

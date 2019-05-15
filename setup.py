@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
 
 from setuptools import setup
 
-setup(name='hichip-peaks',
+setup(name='hichip_peaks',
     version=version,
     description='tool to find peaks from hichip data',
     long_description=long_description,
@@ -26,7 +26,7 @@ setup(name='hichip-peaks',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',
     license='BSD',
-    packages=['hichip-peaks'],
+    packages=['hichip_peaks'],
     install_requires=[
         'scipy',
         'numpy',
@@ -35,9 +35,9 @@ setup(name='hichip-peaks',
     ],
     entry_points = {
         'console_scripts': 
-        ['peak_call=hichip-peaks.main:main',
-        'make_bedgraph=hichip-peaks.bedgraph:main',
-        'diff_peaks=hichip-peaks.diffpeaks:main',
+        ['peak_call=hichip_peaks.main:main',
+        'make_bedgraph=hichip_peaks.bedgraph:main',
+        'diff_peaks=hichip_peaks.diffpeaks:main',
 
         ],
     },
