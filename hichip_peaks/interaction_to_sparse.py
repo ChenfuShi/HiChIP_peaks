@@ -93,7 +93,8 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
 
 
 def Prepare_files(folder,temporary_loc,tempcode,prefix):
-    """Find out files in folder remove duplicates and return variables locating files. If present merge files"""
+    """Find out files in folder remove duplicates and return variables locating files.
+    If multiple files are present merge files"""
 
 
     files = os.listdir(folder)
@@ -140,7 +141,7 @@ def Prepare_files(folder,temporary_loc,tempcode,prefix):
 
 
 def Read_resfrag(resfrag,sizes):
-    """Read the restriction fragment file information and prepare list"""
+    """Read the restriction fragment file information and prepare list with resfrag properties"""
     # results include
     # frag_amount the number of fragments in the valid chromosomes for each chromosome
     # frag_index dictionary with all the frag names to frag index
@@ -181,7 +182,8 @@ def Read_resfrag(resfrag,sizes):
 
 
 def Update_coo_lists_site(current_file,data, row, col,valid_chroms,frag_index,dangling = False):
-    """Takes file and assigns reads to restriction sites"""
+    """Takes file and assigns reads to restriction sites. 
+    Returns the list that is then used to create the sparse matrix"""
     with open(current_file, "r") as pairs:
         for line in pairs:
             info = line.split()

@@ -14,7 +14,8 @@ def main():
     import logging
     import datetime
     import pickle
-    ## here all inputs.
+    
+    ## parse inputs from command line
 
 
     parser = argparse.ArgumentParser(description="Peak calling from HiChIP data")
@@ -34,7 +35,7 @@ def main():
     parser.add_argument("-t", "--temporary_loc", dest="temporary_loc",action="store",required=False, default=None,
                         help="Temporary directory. If not supplied will be output directory")
     parser.add_argument("-w", "--worker_threads", dest="threads",action="store",required=False, default=4, type=int,
-                        help="Number of threads, minimum 4")
+                        help="Number of threads, minimum 4. Warning: Increasing this significantly increases RAM usage")
     parser.add_argument("-k", "--keep_temp", dest="keeptemp",action="store_true", default=False,
                         help="Keep temporary files")
     parser.add_argument("-d", "--keep_diff", dest="keepdiff",action="store_true", default=False,
@@ -45,7 +46,7 @@ def main():
 
 
     
-    # parse arguments and check
+    # parse arguments and check sanity of inputs
 
     hicpro_results = os.path.abspath(args.hicpro_results)
     resfrag = os.path.abspath(args.resfrag)
@@ -65,6 +66,8 @@ def main():
         prefix = os.path.basename(hicpro_results)
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
+    
+    # Create logging file
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
@@ -79,7 +82,7 @@ def main():
         logging.warning("Minimum threads is 4 !!")
 
 
-
+    # set number of threads for numpy
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
     os.environ["MKL_NUM_THREADS"] = str(threads)
@@ -101,7 +104,7 @@ def main():
     logging.info("Threads(minimum is 4): {} ".format(threads))
 
 
-    #apparently moving this should make sure that number of threads is respected in numpy?
+    #apparently moving this after the set should make sure that number of threads is respected in numpy?
     try:
         #this works only when installed
         from hichip_peaks import interaction_to_sparse,sparse_to_peaks, quality_report
