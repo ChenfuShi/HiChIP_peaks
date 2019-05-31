@@ -1,0 +1,441 @@
+---
+title: "Differential peak analysis test"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+This notebook was used to generate the figures for the paper. It is an example on how you can do differential peak analysis from HiChIP peaks tool.
+
+
+set environment requirements
+
+```{r message=FALSE, warning=FALSE}
+setwd("~/GitHub/domain_caller_site_development/diff_analysis_tests")
+
+require("DESeq2")
+require("tximport")
+library("dplyr")
+library("ggplot2")
+library("pheatmap")
+library("RColorBrewer")
+library("apeglm")
+library("GenomicFeatures")
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("EnsDb.Hsapiens.v86")
+
+
+```
+
+
+test 1
+our software and algorithm can differentiate technical replicates from biological replicates
+
+
+```{r}
+## load data
+data <- read.csv(file="diff_peaks_results.csv",header=TRUE)
+
+# select the columns with data and convert to properly formatted dataframe
+count_data <- data[3:6]
+colnames_data<-colnames(count_data)
+# DESeq2 requires all numbers to be integers so round
+count_data=sapply(1:ncol(count_data), function(x) round(count_data[, x], 0))
+# set the rownames as peaks IDs
+rownames(count_data) <- data[,1]
+# set sample conditions
+info<-c("B3","B3","B2","B2")
+colnames_data->colnames(count_data)
+conditions <-data.frame(info,row.names=colnames(count_data))
+# Remove values less than 0
+count_data <- replace(count_data, count_data < 0, 0)
+
+
+#convert to deseq2 dataset
+dds<- DESeqDataSetFromMatrix(countData = count_data,
+                              colData = conditions,
+                              design = ~ info)
+
+
+
+
+
+```
+
+
+exploratory data analysis. Clustering and PCA
+```{r}
+#NORMALIZATION, NOT ACTUALLY USED FOR DESeq2
+
+# this is basically standardization of  for pca and clustering
+# see DESeq2 vignette for more info
+rld <- rlog(dds, blind = TRUE)
+#vsd is the reccomended method for normal things. use the plots from vsd normalization
+vsd <- vst(dds, blind = TRUE)
+
+dds <- DESeq(dds)
+
+##VISUALIZATION OF NORMALIZATION
+
+
+df <- bind_rows(
+  as_data_frame(log2(counts(dds, normalized=TRUE)[, 1:2]+1)) %>%  mutate(transformation = "log2(x + 1)"),
+  as_data_frame(assay(vsd)[, 1:2]) %>% mutate(transformation = "vst"),
+  as_data_frame(assay(rld)[, 1:2]) %>% mutate(transformation = "rlog"))
+#basically sample 1 and 2
+colnames(df)[1:2] <- c("x", "y")  
+
+ggplot(df, aes(x = x, y = y)) + geom_hex(bins = 80) +
+  coord_fixed() + facet_grid( . ~ transformation) 
+
+
+##SAMPLE CLUSTERING DISTANCES(EUCLIDEAN)
+#with vsd
+sampleDists <- dist(t(assay(rld)))
+
+sampleDistMatrix <- as.matrix( sampleDists )
+#rownames(sampleDistMatrix) <-  conditions[1:4,]
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         height = 5,
+         width = 6,
+         #filename = "clustering_naive.pdf",
+         col = colors, main="Clustering of replicates for Naive T cells \n rlog normalization") 
+
+#with rlog
+sampleDists <- dist(t(assay(vsd)))
+
+
+sampleDistMatrix <- as.matrix( sampleDists )
+#rownames(sampleDistMatrix) <-   conditions[1:4,]
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors, main="Clustering of replicates for Naive T cells \n vst normalization") 
+
+##PCA PLOTS
+
+plotPCA(rld,intgroup=c("info"))
+plotPCA(vsd,intgroup=c("info"))
+pcaData <- plotPCA(vsd,intgroup=c("info"),returnData = TRUE)
+pcaData
+
+p <- plotPCA(vsd,intgroup=c("info"))
+p <- p + geom_text(aes_string(x = "PC1", y = "PC2", label = "name"), color = "black",size=3)
+print(p)
+```
+
+```{r}
+res <- results(dds, contrast=c("info", "B3","B2"),alpha=0.10, lfcThreshold = 0.5)
+
+summary(res)
+
+
+resOrdered <- res[order(res$pvalue),]
+resOrderedDF <- as.data.frame(resOrdered)
+resOrderedDF
+
+# there are 2998 regions that are differentially bound between the two biological replicates
+
+```
+
+
+Test2
+Analysis of the different T cell subtypes
+
+
+
+
+```{r}
+#clean environment first!
+rm(list=ls())
+
+#load the dataset for the different T cells subtypes comparison
+data <- read.csv(file="T_cells_comparison.csv",header=TRUE)
+# select the columns with data and convert to properly formatted dataframe
+count_data <- data[3:8]
+colnames_data<-colnames(count_data)
+# DESeq2 requires all numbers to be integers so round
+count_data=sapply(1:ncol(count_data), function(x) round(count_data[, x], 0))
+# set the rownames as peaks IDs
+rownames(count_data) <- data[,1]
+# set sample conditions
+info<-c("naive","naive","th17","treg","treg","th17")
+colnames_data->colnames(count_data)
+conditions <-data.frame(info,row.names=colnames(count_data))
+# Remove values less than 0
+count_data <- replace(count_data, count_data < 0, 0)
+
+# keep information about peak location into variable
+peak_info <- data[1:2]
+
+
+#convert to deseq2 dataset
+dds<- DESeqDataSetFromMatrix(countData = count_data,
+                              colData = conditions,
+                              design = ~ info)
+
+
+
+
+
+
+```
+
+
+
+
+
+exploratory data analysis
+```{r}
+#NORMALIZATION, NOT ACTUALLY USED FOR DESeq2
+
+# this is basically standardization of  for pca and clustering
+# see DESeq2 vignette for more info
+rld <- rlog(dds, blind = TRUE)
+#vsd is the reccomended method for normal things. use the plots from vsd normalization
+vsd <- vst(dds, blind = TRUE)
+
+dds <- DESeq(dds)
+
+##VISUALIZATION OF NORMALIZATION
+
+
+df <- bind_rows(
+  as_data_frame(log2(counts(dds, normalized=TRUE)[, 1:2]+1)) %>%  mutate(transformation = "log2(x + 1)"),
+  as_data_frame(assay(vsd)[, 1:2]) %>% mutate(transformation = "vst"),
+  as_data_frame(assay(rld)[, 1:2]) %>% mutate(transformation = "rlog"))
+#basically sample 1 and 2
+colnames(df)[1:2] <- c("x", "y")  
+
+ggplot(df, aes(x = x, y = y)) + geom_hex(bins = 80) +
+  coord_fixed() + facet_grid( . ~ transformation)  
+
+
+##SAMPLE CLUSTERING DISTANCES(EUCLIDEAN) it is possible to do poisson if you want
+#with rlog
+sampleDists <- dist(t(assay(rld)))
+
+sampleDistMatrix <- as.matrix( sampleDists )
+#rownames(sampleDistMatrix) <-  conditions[1:6,]
+rownames(sampleDistMatrix) <- c("Naive T B2","Naive T B3", "Th17 B2","Treg B2","Treg B3", "Th17 B3")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+          height = 5,
+         width = 6,
+         #filename = "clustering_t.pdf",
+         col = colors, main="Clustering of different T cells subtypes \n rlog normalization")
+
+#with vsd
+sampleDists <- dist(t(assay(vsd)))
+
+
+sampleDistMatrix <- as.matrix( sampleDists )
+#rownames(sampleDistMatrix) <-   conditions[1:6,]
+rownames(sampleDistMatrix) <- c("Naive T B2","Naive T B3", "Th17 B2","Treg B2","Treg B3", "Th17 B3")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors, main="Clustering of different T cells subtypes \n vst normalization")
+
+##PCA PLOTS
+
+plotPCA(rld,intgroup=c("info")) + ggtitle("PCA of T cells subtypes, rlog normalization")
+plotPCA(vsd,intgroup=c("info")) + ggtitle("PCA of T cells subtypes, vst normalization")
+pcaData <- plotPCA(vsd,intgroup=c("info"),returnData = TRUE)
+pcaData
+
+p <- plotPCA(vsd,intgroup=c("info"))
+p <- p + geom_text(aes_string(x = "PC1", y = "PC2", label = "name"), color = "black",size=3)
+print(p)
+```
+
+
+execute the next two steps with the different comparisons to get results for each contrast!
+
+```{r}
+res <- results(dds, contrast=c("info", "naive","th17"),alpha=0.10, lfcThreshold = 0.5)
+
+summary(res)
+
+
+resOrdered <- res[order(res$pvalue),]
+resOrderedDF <- as.data.frame(resOrdered)
+
+```
+
+
+this block will create all the databases as well that are needed for the next step as well. it will annotate peaks and save the csv with the p values for that particular contrast(set up above)
+
+```{r}
+#identifying genes changed
+#create dataset to convert peaks names to peaks position for Granges
+peak_info_postion=lapply(1:nrow(peak_info), function(x) strsplit(as.character(peak_info[x, 2]), split = ":|-")[[1]]);
+peak_info_positions=do.call(rbind, peak_info_postion)
+peak_info_positions=cbind(as.character(peak_info[,1]), peak_info_positions)
+colnames(peak_info_positions)<-c("peak","chr","start","end")
+#assign positions to deseq2 dataframe
+resOrderedDF_with_loc=merge(x=resOrderedDF, y=peak_info_positions, by.x="row.names", by.y="peak");
+
+peak_genomic_ranges=makeGRangesFromDataFrame(resOrderedDF_with_loc,keep.extra.columns=TRUE,ignore.strand=TRUE)
+
+
+#create database for promoters. promoters are TSS +- 1kb
+
+edb <- EnsDb.Hsapiens.v86
+edb
+
+transcripts_DF <- select(edb,keys=keys(edb, keytype="TXID"), columns=c("TXID","SEQNAME", "TXSEQSTART", "TXSEQEND", "SEQSTRAND","TXBIOTYPE","ENTREZID","GENENAME"), keytype="TXID")
+
+find_promoter <- function(line){
+  if (as.integer(line["SEQSTRAND"])==1)
+  {
+    start = as.integer(line["TXSEQSTART"]) - 1000
+    end = as.integer(line["TXSEQSTART"]) + 1000
+  }
+  else
+  {
+    start = as.integer(line["TXSEQEND"]) - 1000
+    end = as.integer(line["TXSEQEND"]) + 1000
+  }
+  return(c(start,end))
+}
+
+
+
+temp <- t(apply(transcripts_DF,1,find_promoter))
+colnames(temp) <- c("start","end")
+transcripts_DF <- cbind(transcripts_DF,temp)
+
+transcripts_DF$SEQNAME <- paste("chr", transcripts_DF$SEQNAME, sep="")
+
+transcripts_promoters = makeGRangesFromDataFrame(transcripts_DF,keep.extra.columns=TRUE,ignore.strand=TRUE)
+
+#all promoters done
+
+
+#assign promoters to peaks
+mcols(peak_genomic_ranges)$genes <- NA
+mcols(peak_genomic_ranges)$entrez <- NA
+hits <- findOverlaps(query = peak_genomic_ranges, subject = transcripts_promoters, ignore.strand = TRUE)
+mcols(peak_genomic_ranges[queryHits(hits)])$genes <- transcripts_promoters[subjectHits(hits)]$GENENAME
+mcols(peak_genomic_ranges[queryHits(hits)])$entrez <- transcripts_promoters[subjectHits(hits)]$ENTREZID
+
+annotated_peaks <- as.data.frame(peak_genomic_ranges)
+
+#select the peaks that had a promoter annotated using gene name
+annotated_peaks_noNa <- annotated_peaks[!is.na(annotated_peaks$genes),]
+
+#select for significantly different genes
+diff_genes = annotated_peaks_noNa[which(annotated_peaks_noNa$padj < 0.10 ),]
+
+#write.table(diff_genes,"naive_vs_th17.csv", row.names = FALSE, col.names = FALSE)
+```
+
+
+this block does the above but uses all peaks from all contrasts, this creates a full database with normalized counts.
+subsequently it selects the peaks to be viewed as the most differentially expressed between the three contrasts and makes a heatmap
+
+```{r fig.height=25, fig.width=15}
+#heatmap of peaks 
+#take normalized counts, remember that these are not regularized
+all_peaks_normalized_counts = as.data.frame(counts( dds, normalized=TRUE ))
+all_peaks_normalized_counts_with_pos<-merge(x=all_peaks_normalized_counts, y=peak_info_positions, by.x="row.names", by.y="peak")
+all_peaks_normalized_counts_GRanges <- makeGRangesFromDataFrame(all_peaks_normalized_counts_with_pos,keep.extra.columns=TRUE,ignore.strand=TRUE)
+mcols(all_peaks_normalized_counts_GRanges)$genes <- NA
+mcols(all_peaks_normalized_counts_GRanges)$entrez <- NA
+hits <- findOverlaps(query = all_peaks_normalized_counts_GRanges, subject = transcripts_promoters, ignore.strand = TRUE)
+mcols(all_peaks_normalized_counts_GRanges[queryHits(hits)])$genes <- transcripts_promoters[subjectHits(hits)]$GENENAME
+mcols(all_peaks_normalized_counts_GRanges[queryHits(hits)])$entrez <- transcripts_promoters[subjectHits(hits)]$ENTREZID
+
+annotated_peaks_counts <- as.data.frame(all_peaks_normalized_counts_GRanges)
+
+annotated_peaks_counts_noNa <- annotated_peaks_counts[!is.na(annotated_peaks_counts$genes),]
+#peaks annotated and selected!
+
+#the thing that actually selects the peaks to be viewed. change this to view differentially expressed
+#remember these counts are not regularized, this means that selecting the most variable is probably selecting peaks that have low expressoin
+topVariancepeaks <- rownames(vsd[head(order(rowVars(assay(vsd)), decreasing=T),100),])
+
+selected_peaks = annotated_peaks_counts_noNa[which(annotated_peaks_counts_noNa$Row.names %in% topVariancepeaks),]
+
+matrix <- selected_peaks[7:12]
+#this function calculates z scores ot make it more uniform across different expression levels
+cal_z_score <- function(x){
+  (x - mean(x)) / sd(x)
+}
+
+
+my_sample_col <-  data.frame("cell type" = info)
+row.names(my_sample_col) <- colnames(selected_peaks[7:12])
+matrix <- t(apply(matrix, 1, cal_z_score))
+pheatmap(matrix, 
+         labels_row = selected_peaks$genes,
+         annotation_col = my_sample_col)
+
+
+
+### selecting top DE genes
+res <- results(dds, contrast=c("info", "naive","treg"),alpha=0.10, lfcThreshold = 0.5)
+topDEpeaks<- rownames(res[head(order(res$pvalue),100),])
+#write.table(merge(as.data.frame(res[res$padj < 0.10,]),peak_info, by.x="row.names", by.y="X"),"naive_vs_treg_DEpeaks.csv", row.names = TRUE, col.names = TRUE)
+res <- results(dds, contrast=c("info", "naive","th17"),alpha=0.10, lfcThreshold = 0.5)
+topDEpeaks<- c(topDEpeaks,rownames(res[head(order(res$pvalue),100),]))
+#write.table(merge(as.data.frame(res[res$padj < 0.10,]),peak_info, by.x="row.names", by.y="X"),"naive_vs_th17_DEpeaks.csv", row.names = TRUE, col.names = TRUE)
+res <- results(dds, contrast=c("info", "treg","th17"),alpha=0.10, lfcThreshold = 0.5)
+topDEpeaks<- c(topDEpeaks,rownames(res[head(order(res$pvalue),100),]))
+
+
+
+selected_peaks = annotated_peaks_counts_noNa[which(annotated_peaks_counts_noNa$Row.names %in% topDEpeaks),]
+
+matrix <- selected_peaks[7:12]
+
+matrix <- t(apply(matrix, 1, cal_z_score))
+pheatmap(matrix, 
+         labels_row = selected_peaks$genes,
+         annotation_col = my_sample_col,
+         #filename = "DE_peaks_heatmap.pdf",
+         height = 25,
+         width = 10,
+         fontsize_col =  20)
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+Sys.time()
+
+sessionInfo()
+```
+
+
+
+
+
+

@@ -236,10 +236,10 @@ if __name__=="__main__":
         logging.StreamHandler()
     ]
     )
-    folder = os.path.abspath("./../domain_caller/testdata/NaiveT_27ac_B1_T1")
-    resfrag = os.path.abspath("./../domain_caller/testdata/MboI_resfrag_hg38.bed")
+    folder = os.path.abspath("./testdata/NaiveT_27ac_B1_T1")
+    resfrag = os.path.abspath("./testdata/MboI_resfrag_hg38.bed")
     sizes = None
-    temporary_loc = os.path.abspath("./../domain_caller/testdata")
+    temporary_loc = os.path.abspath("./testdata")
 
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,"testdata")
 
