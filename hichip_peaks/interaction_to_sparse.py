@@ -142,6 +142,7 @@ def Prepare_files(folder,temporary_loc,tempcode,prefix):
 
 def Read_resfrag(resfrag,sizes):
     """Read the restriction fragment file information and prepare list with resfrag properties"""
+    # assumes resfrag file is sorted as the valid chroms file. valid chroms file only has proper chromosomes, no contigs
     # results include
     # frag_amount the number of fragments in the valid chromosomes for each chromosome
     # frag_index dictionary with all the frag names to frag index
