@@ -8,6 +8,9 @@
 
 # to install without copying files
 # pip install -e .
+# to create distribution packages python setup.py sdist bdist_wheel
+# python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+# twine upload dist/*
 
 version=0.1
 
@@ -22,7 +25,7 @@ setup(name='hichip_peaks',
     description='tool to find peaks from hichip data',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://github.com/ChenfuShi/domain_caller_site',
+    url='https://github.com/ChenfuShi/HiChIP_peaks',
     author='Chenfu Shi',
     author_email='chenfu.shi@postgrad.manchester.ac.uk',
     license='BSD',

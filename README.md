@@ -85,7 +85,7 @@ optional arguments:
                         Temporary directory. If not supplied will be output
                         directory
   -w THREADS, --worker_threads THREADS
-                        Number of threads, minimum 4
+                        Number of threads, minimum 4. Warning: Increasing this significantly increases RAM usage
   -k, --keep_temp       Keep temporary files
   -d, --keep_diff       Prepare files for differential analysis
   -s OFF_DIAG, --offdiag OFF_DIAG

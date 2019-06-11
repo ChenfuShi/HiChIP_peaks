@@ -25,7 +25,7 @@ import itertools
 import logging
 import pickle
 
-def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=0.10,threads=4,keeptemp=False):
+def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=0.01,threads=4,keeptemp=False):
     """Wrapper function to call individual funcitons
     smoothed_diagonal : (list) that contains the number of reads from the diagonal + n off_diags and then is smoothed using the moving integration
     refined_peaks : (list) peaks output from the negative binomial model
@@ -294,8 +294,9 @@ def refined_call(smoothed_diagonal, quick_peaks, frag_prop,FDR,off_diag,threads)
     logging.info("Identifying enriched regions using negative binomial model")
 
     # run peak calling using a negative binomial model, input the p and mean calculated using the mean and the dispersion parameter from the nb fit
-    nb_p_vals = []
     nb_n = 1/nb_alpha
+    
+    # nb_p_vals = []
     # for site_index in range(len(smoothed_diagonal)): 
     #     nb_p = nb_n/(expected_background[site_index]+nb_n)
     #     nb_p_vals.append(scipy.stats.nbinom.sf(smoothed_diagonal[site_index], nb_n,nb_p) + scipy.stats.nbinom.pmf(smoothed_diagonal[site_index] , nb_n,nb_p) )
@@ -374,11 +375,11 @@ if __name__=="__main__":
         logging.StreamHandler()
     ]
     )
-    CSR_mat = scipy.sparse.load_npz('../domain_caller_site/testdata/sparse_matrix_mumbach_non_reassigned_chr1.npz')
-    with open("../domain_caller_site/testdata/variables.pi","rb") as picklefile:
+    CSR_mat = scipy.sparse.load_npz('./testdata/sparse_matrix.npz')
+    with open("./testdata/variables.pi","rb") as picklefile:
         frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = pickle.load(picklefile)
     output_dir = os.path.abspath("./testdata")
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks(CSR_mat,frag_index,frag_prop[:584662],frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",2,threads=6)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,"testdata",2,threads=6)
 
 
     with open("./testdata/peaks_chr1_mumbach.pi","wb") as picklefile:
