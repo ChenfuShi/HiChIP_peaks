@@ -16,21 +16,19 @@ The package requires bedtools to run. The package can then be installed through 
 
 ```
 pip install bedtools
-pip install hichip_peaks
-```
-
-Or through bioconda
-
-```
-conda install bedtools
-conda install hichip_peaks
+pip install hichip-peaks
 ```
 
 We suggest using conda environments to avoid cluttering
 
+```
+conda create --name hichip-peaks python=3.7
+conda install pip
+pip install hichip-peaks
+```
 
 ### Usage
-#### peak calling
+#### Peak calling
 Clean the raw reads and align using HiC-Pro with normal settings making sure that these settings are set as follows(for MboI digested libraries):
 
 ```
@@ -99,7 +97,7 @@ The command requires that all the files in that folder are present, including th
 
 
 
-#### differential peak analysis
+#### Differential peak analysis
 
 Run the previous commands with the --keepdiff flag enabled. This will produce a temporary file that can be used with the diff_peaks command to integrate all samples together. This utility will look for all the correct files in a specified folder, merge the peaks at a fragment site level a produce a table with the signal in each peak from each sample. This can then be imported in R or others and analysed using DESeq2 or other differential expression analysis tools. See example R script for inspiration.
 
@@ -132,11 +130,15 @@ optional arguments:
 
 ## Authors
 
-This packages was developed by Chenfu Shi<sup>1</sup>, Magnus Rattray<sup>2</sup> and Gisela Orozco<sup>1</sup> at the University of Manchester.
-1) Arthritis Research UK Centre for Genetics and Genomics, Division of Musculoskeletal and Dermatological Sciences, School of Biological Sciences, Faculty of Biology, Medicine and Health, The University of Manchester, UK
-2) School of Biological Sciences, Faculty of Biology, Medicine and Health, The University of Manchester, UK
+This packages was developed by Chenfu Shi<sup>1</sup>, Magnus Rattray<sup>2,3</sup> and Gisela Orozco<sup>1,3</sup> at the University of Manchester.
 
-The project was funded by the Wellcome Trust.
+1) Centre for Genetics and Genomics Versus Arthritis. Division of Musculoskeletal and Dermatolog-ical Sciences, School of Biological Sciences, Faculty of Biology, Medicine and Health, The Universi-ty of Manchester, UK
+2) Division of Informatics, Imaging and Data Sciences, Faculty of Biology, Medicine and Health, University of Manchester, UK.
+3) NIHR Manchester Biomedical Research Centre, Manchester University NHS Foundation Trust, Manchester Academic Health Science Centre, Manchester, UK.
+
+
+This work was funded by the Wellcome Trust (award references 207491/Z/17/Z and 215207/Z/19/Z), Versus Arthritis (award reference 21754), NIHR Manchester BRC and the Medical Research Council (award reference MR/N00017X/1).
+Conflict of Interest: none declared.
 
 
 ## License
@@ -163,5 +165,5 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Please cite our paper when using this package for your research!
 ```
-blablabla doi
+coming
 ```
