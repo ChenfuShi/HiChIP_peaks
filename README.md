@@ -19,15 +19,13 @@ pip install bedtools
 pip install hichip_peaks
 ```
 
-Or through bioconda
-
-```
-conda install bedtools
-conda install hichip_peaks
-```
-
 We suggest using conda environments to avoid cluttering
 
+```
+conda create --name hichip-peaks python=3.7
+conda install pip
+pip install hichip_peaks
+```
 
 ### Usage
 #### peak calling
@@ -163,5 +161,5 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Please cite our paper when using this package for your research!
 ```
-blablabla doi
+coming
 ```
