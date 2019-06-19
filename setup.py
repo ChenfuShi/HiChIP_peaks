@@ -12,7 +12,7 @@
 # python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 # twine upload dist/*
 
-version=0.1
+version="0.1.0"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -22,7 +22,7 @@ from setuptools import setup
 
 setup(name='hichip_peaks',
     version=version,
-    description='tool to find peaks from hichip data',
+    description='A tool to find peaks from hichip data',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/ChenfuShi/HiChIP_peaks',
