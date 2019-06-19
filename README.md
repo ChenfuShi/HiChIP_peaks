@@ -16,7 +16,7 @@ The package requires bedtools to run. The package can then be installed through 
 
 ```
 pip install bedtools
-pip install hichip_peaks
+pip install hichip-peaks
 ```
 
 We suggest using conda environments to avoid cluttering
@@ -24,7 +24,7 @@ We suggest using conda environments to avoid cluttering
 ```
 conda create --name hichip-peaks python=3.7
 conda install pip
-pip install hichip_peaks
+pip install hichip-peaks
 ```
 
 ### Usage
