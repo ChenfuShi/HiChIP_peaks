@@ -16,8 +16,6 @@ def main():
     import pickle
     
     ## parse inputs from command line
-
-
     parser = argparse.ArgumentParser(description="Peak calling from HiChIP data")
 
     parser.add_argument("-i", "--input", dest="hicpro_results",action="store",required=True,
@@ -42,12 +40,13 @@ def main():
                         help="Prepare files for differential analysis")
     parser.add_argument("-s", "--offdiag", dest="off_diag",action="store",required=False, type=int, default=2,
                         help="How many off diagonal needs to be included (default = 2)")
+    parser.add_argument("-x", "--chromX", dest="chromX",action="store_true",required=False, default=False,
+                        help="Want to compensate Sex chromosomes weights? Requires specify annotation(SIZES) containing chrX and chrY")
+    parser.add_argument("-c", "--class_store", dest="class_store",action="store_true",required=False, default=False,
+                        help="Store sparse site_matrix object for further use")
     args = parser.parse_args()
 
-
-    
     # parse arguments and check sanity of inputs
-
     hicpro_results = os.path.abspath(args.hicpro_results)
     resfrag = os.path.abspath(args.resfrag)
     prefix=args.prefix
@@ -62,12 +61,14 @@ def main():
     threads=args.threads
     FDR=args.FDR
     off_diag = args.off_diag
+    chromX = args.chromX
+    class_store = args.class_store
     if prefix == None:
         prefix = os.path.basename(hicpro_results)
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     
-    # Create logging file
+    # Create logging file. prints both to screen and to log file
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s - %(message)s",
@@ -81,7 +82,6 @@ def main():
         threads = 4 
         logging.warning("Minimum threads is 4 !!")
 
-
     # set number of threads for numpy
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
@@ -89,7 +89,21 @@ def main():
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
     os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
 
-    logging.info("Welcome to my software!")
+    # import functions that do actual analysis
+    # apparently moving this after the threads set should make sure that number of threads is respected in numpy?
+    try:
+        #this works only when installed, which is the large majority of use cases
+        from hichip_peaks import interaction_to_sparse,sparse_to_peaks, quality_report
+        from hichip_peaks.__init__ import __version__
+    except:
+        import interaction_to_sparse 
+        import sparse_to_peaks
+        import quality_report
+        from __init__ import __version__
+
+    # log inputs
+    logging.info("Welcome to HiChIP-Peaks!")
+    logging.info("Version: {}".format(__version__))
     logging.info(datetime.datetime.now())
     logging.info("Input variables")
     logging.info("HiC-Pro data folder: {} ".format(hicpro_results))
@@ -102,33 +116,24 @@ def main():
     logging.info("Output name prefix: {} ".format(prefix))
     logging.info("Keep temporary files?: {} ".format(keeptemp))
     logging.info("Threads(minimum is 4): {} ".format(threads))
+    logging.info("Sex chromosomes correction: {} ".format(chromX))
+    logging.info("Store object containing sparse matrix: {} ".format(class_store))
 
-
-    #apparently moving this after the set should make sure that number of threads is respected in numpy?
-    try:
-        #this works only when installed
-        from hichip_peaks import interaction_to_sparse,sparse_to_peaks, quality_report
-    except:
-        import interaction_to_sparse 
-        import sparse_to_peaks
-        import quality_report
-    
+    # Start of actualy analysis
     # call first function to create sparse matrix representation of hichip data
 
     CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets = interaction_to_sparse.HiCpro_to_sparse(hicpro_results,resfrag,sizes,temporary_loc,prefix,keeptemp=keeptemp)
 
-    # call peak calling algorithm
+    # call peak calling algorithm. This also saves peaks and bedgraph
 
-    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,FDR=FDR,threads=threads,keeptemp=keeptemp)
+    smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals ,expected_background= sparse_to_peaks.sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,output_dir,prefix,off_diag,chromX,FDR=FDR,threads=threads,keeptemp=keeptemp)
 
+    # call quality report generator
     logging.info("#######################################")
     logging.info("Creating report with summary statistics")
     quality_report.quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, prefix)
 
-
-    #if add an option to keep the data for the differential peak calling. then extra script that actually prepares the data for differential peak calling and goes into R
-    #would still require the person to manually set design experiments and stuff.
-    #save files for differential peak analysis
+    # save files for differential peak analysis
     if keepdiff == True:
         logging.info("#######################################")
         logging.info("Saving file for differential peak analysis")
@@ -137,15 +142,16 @@ def main():
     
 
 
+
+
     # # only for test and development purposes
     # with open(os.path.join(output_dir,prefix + "alldata.pickle"),"wb") as picklefile:
     #     pickle.dump([CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets,smoothed_diagonal, refined_peaks ,quick_peaks, peak_p_vals , peaks_q_vals,expected_background],picklefile)
 
-
-
     logging.info("#######################################")
     logging.info(datetime.datetime.now())
     logging.info("Done!")
+
 
 if __name__=="__main__":
     main()
