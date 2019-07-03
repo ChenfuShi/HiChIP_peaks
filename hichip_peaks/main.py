@@ -94,6 +94,7 @@ def main():
     try:
         #this works only when installed, which is the large majority of use cases
         from hichip_peaks import interaction_to_sparse,sparse_to_peaks, quality_report
+        from hichip_peaks.site_matrix_class import site_matrix
         from hichip_peaks.__init__ import __version__
     except:
         import interaction_to_sparse 
@@ -140,9 +141,13 @@ def main():
         with open(os.path.join(output_dir,prefix + "diffpeak_data.pickle"),"wb") as picklefile:
             pickle.dump([smoothed_diagonal,refined_peaks,expected_background],picklefile)
     
-
-
-
+    if class_store == True:
+        logging.info("#######################################")
+        logging.info("Storing sparse matrix object for future analysis")
+        mat_obj = site_matrix(CSR_mat, valid_chroms,frag_prop,frag_index,frag_amount,chroms_offsets)
+        peaks = mat_obj.register_peaks(refined_peaks)
+        with open(os.path.join(output_dir,prefix + "mat_obj.pickle"),"wb") as picklefile:
+            pickle.dump(mat_obj,picklefile)
 
     # # only for test and development purposes
     # with open(os.path.join(output_dir,prefix + "alldata.pickle"),"wb") as picklefile:

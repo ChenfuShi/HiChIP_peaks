@@ -8,10 +8,7 @@
 # now this will get assigned wrongly the the first and last fragment of the chromosome
 # to get the real bp location of the restriction site you can use frag_prop[i][1]
 # this way number of fragments is the same as number of sites and it doesn't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
-    # add: sanity checking all inputs # DONE
-    # change temp filename so it's always unique and also do cleanup at the end #DONE
-    # create directories when needed # DONE
-    # options that i might want to include: use DE? 
+
 
 #########################################
 import scipy
@@ -205,16 +202,18 @@ def Update_coo_lists_site(current_file,data, row, col,valid_chroms,frag_index,da
                 index_frag_1 = frag_index[frag_1]
                 index_frag_2 = frag_index[frag_2]
                 if dangling:
+                    # if dangling end reverse the direction (assign to back instead of front, shouldn't really matter as the two reads compensate themselves)
                     if dir_1 == "-":
                         index_frag_1 += 1
                     if dir_2 == "-":
                         index_frag_2 += 1
                 else:
+                    # if read is positive assign to next site, otherwise to current site
                     if dir_1 == "+":
                         index_frag_1 += 1
                     if dir_2 == "+":
                         index_frag_2 += 1
-
+                # it's appending twice for the two sides of the matrix. future optimization might include using a upper triangular format to save half the memory
                 data.append(1)
                 data.append(1)
                 row.append(index_frag_1)
