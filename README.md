@@ -15,17 +15,16 @@ Results from this package can then be used for further analysis and as a peaks d
 The package requires bedtools to run. The package can then be installed through pip
 
 ```
-pip install bedtools
 pip install hichip-peaks
 ```
 
 We suggest using conda environments to avoid cluttering
 
 ```
-conda create --name hichip-peaks python=3.7
-conda install pip
+conda create --name hichip-peaks python=3.7 bedtools pip
 pip install hichip-peaks
 ```
+
 
 ### Usage
 #### Peak calling
@@ -165,5 +164,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Please cite our paper when using this package for your research!
 ```
-coming
+Shi,C. et al. (2019) HiChIP-Peaks: A HiChIP peak calling algorithm. bioRxiv, 682781.
+https://doi.org/10.1101/682781
 ```
