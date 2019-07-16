@@ -12,16 +12,19 @@
 # python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 # twine upload dist/*
 
-version="0.1.0"
+__version__="0.1.1"
 
+# Read contents of long description (same as github readme)
 with open("README.md", "r") as fh:
     long_description = fh.read()
-
+# Update version number in __init__.py, This allows people to get the currently installed version from files when they import
+with open("./hichip_peaks/__init__.py","w") as init_file:
+    init_file.write(f"__version__=\"{__version__}\"")
 
 from setuptools import setup
 
 setup(name='hichip_peaks',
-    version=version,
+    version=__version__,
     description='A tool to find peaks from hichip data',
     long_description=long_description,
     long_description_content_type="text/markdown",

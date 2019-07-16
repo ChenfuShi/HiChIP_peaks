@@ -58,10 +58,6 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
     logging.info('Number of peaks called : {}'.format(num_lines))
     logging.info('Number of reads in peaks : {} ({:.2%})'.format(num_reads_in_peaks,num_reads_in_peaks/num_reads))
 
-
-
-
-
     #p value distribution
     fig2, ax2 = matplotlib.pyplot.subplots(figsize=(9,5))
     ax2.spines["top"].set_visible(False)  

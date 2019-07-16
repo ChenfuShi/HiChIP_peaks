@@ -8,10 +8,7 @@
 # now this will get assigned wrongly the the first and last fragment of the chromosome
 # to get the real bp location of the restriction site you can use frag_prop[i][1]
 # this way number of fragments is the same as number of sites and it doesn't complicate too much stuff. also logically last site (or first) of a chromosome won't give any meaningful results.
-    # add: sanity checking all inputs # DONE
-    # change temp filename so it's always unique and also do cleanup at the end #DONE
-    # create directories when needed # DONE
-    # options that i might want to include: use DE? 
+
 
 #########################################
 import scipy
@@ -42,7 +39,7 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
     chroms_offsets: (dict) offsets for each chromosome. the recorded value is the start of the new chromosome INCLUSIVE. n contains referes to site that has last/first site of chromosomes and site 1 of chromosome
     if i call site n that is the site that has both the last of the last chromosome and the start of the new one. it is not really a site because it's just the end and start bp of chromosome. note that whatever you do these sites do not mean anything for further analysis
     """
-    # check inputs
+    # check inputs and make directories
     if not os.path.isdir(temporary_loc):
         os.makedirs(temporary_loc)
     if not os.path.isdir(folder):
@@ -55,18 +52,20 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
     logging.info("Loading experiment information and read pairs")
     logging.info("#######################################")
     logging.info("Start reading experiment information (restriction fragments and chromosomes)")
-
+    
+    # read annotation files and create properties of fragments and matrix
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = Read_resfrag(resfrag,sizes)
 
     logging.info("#######################################")
     logging.info("Preparing HiC-Pro output for import")
 
+    # prepare the files from hic-pro and pass filenames back
     file_valid_pairs, file_self_circle, file_dangling, file_religation = Prepare_files(folder,temporary_loc,tempcode,prefix)
 
     logging.info("#######################################")
     logging.info("Converting HiC-Pro to sparse matrix rappresentation of valid pairs at restriction site resolution")
 
-    # make the sparse matrix. sends a file at a time and adds stuff to the matrix
+    # make the sparse matrix. sends a file at a time and adds stuff to the lists that are in coordinate format
     coo_data = []
     coo_row = []
     coo_col = []
@@ -74,7 +73,9 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
         coo_data, coo_row, coo_col = Update_coo_lists_site(current_file,coo_data, coo_row, coo_col,valid_chroms,frag_index)
     coo_data, coo_row, coo_col = Update_coo_lists_site(file_dangling,coo_data, coo_row, coo_col,valid_chroms,frag_index,dangling = True)
     
+    # major step that converts the lists into a sparse matrix repressatation
     CSR_mat = scipy.sparse.csr_matrix((coo_data, (coo_row, coo_col)), shape=(len(frag_index)+1, len(frag_index)+1), dtype = numpy.float32)[:len(frag_index),:len(frag_index)]
+    
     if keeptemp == False:
         os.remove(file_self_circle)
         os.remove(file_religation)
@@ -83,11 +84,13 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
     logging.info("#######################################")
     logging.info("Sparse matrix of experiment generated")
     logging.info("Number of read pairs parsed: {}".format(CSR_mat.sum()/2))
+
     if keeptemp == True:
         logging.info("Saving intermediate files for further use")
         scipy.sparse.save_npz(os.path.join(temporary_loc, prefix + "CSR_matrix.npz"), CSR_mat)
         with open(os.path.join(temporary_loc, prefix + "variables.pickle"),"wb") as picklefile:
             pickle.dump([frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets],picklefile)
+    
     return CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms_offsets
 
 
@@ -95,21 +98,20 @@ def HiCpro_to_sparse(folder,resfrag,sizes,temporary_loc,prefix,keeptemp=False,te
 def Prepare_files(folder,temporary_loc,tempcode,prefix):
     """Find out files in folder remove duplicates and return variables locating files.
     If multiple files are present merge files"""
-
-
+    
+    # check if files are present
     files = os.listdir(folder)
     if len(files) < 1:
         raise Exception("couldn't find files in specified folder")
     for i in range(len(files)):
         files[i] = os.path.join(folder, files[i])
 
-
     regex = re.compile(".*allValidPairs")
     try:
         file_valid_pairs = list(filter(regex.match, files))[0]
     except IndexError:
         raise Exception("couldn't find allValidPairs file")
-
+    # because there can be multiple SC, DE and RE files list all of them.
     regex = re.compile(".*SCPairs")
     list_self_circle = list(filter(regex.match, files))
     file_self_circle = os.path.join(temporary_loc, prefix + tempcode + "SCPairs")
@@ -124,8 +126,8 @@ def Prepare_files(folder,temporary_loc,tempcode,prefix):
 
     if (len(file_self_circle) < 1) or (len(file_dangling) < 1) or (len(file_religation) < 1):
         raise Exception("couldn't find all files in specified folder")
-
-
+    
+    # runs commands in parallel for sorting and unique the files. also the output is joined to one file
     shcommands = []
     for files , output in zip((list_self_circle, list_dangling, list_religation),(file_self_circle, file_dangling, file_religation)):
         command ="sort -u -k 2,2 -k 3,3 -k 5,5 -k 6,6 " + " ".join(files) + " > " + output
@@ -136,7 +138,6 @@ def Prepare_files(folder,temporary_loc,tempcode,prefix):
         #waits for them to finish
         p.wait()
     
-
     return file_valid_pairs, file_self_circle, file_dangling, file_religation
 
 
@@ -149,6 +150,8 @@ def Read_resfrag(resfrag,sizes):
     # frag_prop the list of fragments with tuple with chr, start and end and length of each frag
     # list of valid chromosomes
     # offsets used for the sparse matrix implementation, not used anymore there, bust might still be useful
+    
+    # note default doesn't have sex chromosomes
     if sizes==None:
         valid_chroms=['chr1', 'chr2', 'chr3', 'chr4', 'chr5',
                     'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15',
@@ -183,8 +186,9 @@ def Read_resfrag(resfrag,sizes):
 
 
 def Update_coo_lists_site(current_file,data, row, col,valid_chroms,frag_index,dangling = False):
-    """Takes file and assigns reads to restriction sites. 
+    """Takes file and assigns reads to restriction sites based on direction. 
     Returns the list that is then used to create the sparse matrix"""
+    # always appends to lists
     with open(current_file, "r") as pairs:
         for line in pairs:
             info = line.split()
@@ -198,16 +202,18 @@ def Update_coo_lists_site(current_file,data, row, col,valid_chroms,frag_index,da
                 index_frag_1 = frag_index[frag_1]
                 index_frag_2 = frag_index[frag_2]
                 if dangling:
+                    # if dangling end reverse the direction (assign to back instead of front, shouldn't really matter as the two reads compensate themselves)
                     if dir_1 == "-":
                         index_frag_1 += 1
                     if dir_2 == "-":
                         index_frag_2 += 1
                 else:
+                    # if read is positive assign to next site, otherwise to current site
                     if dir_1 == "+":
                         index_frag_1 += 1
                     if dir_2 == "+":
                         index_frag_2 += 1
-
+                # it's appending twice for the two sides of the matrix. future optimization might include using a upper triangular format to save half the memory
                 data.append(1)
                 data.append(1)
                 row.append(index_frag_1)

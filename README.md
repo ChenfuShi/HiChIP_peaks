@@ -8,6 +8,18 @@ Using the differential analysis command it can be used to create a consensus pea
 
 Results from this package can then be used for further analysis and as a peaks dataset input for various loop calling software.
 
+#### Table of Contents 
+- [Getting Started](#getting-started)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Peak Calling](#peak-calling)
+    * [Example run](#example-run)
+    * [Differential peak analysis](#differential-peak-analysis)
+
+- [Authors](#authors)
+- [License](#license)
+- [Citation](#citation)
+
 ## Getting started
 
 ### Installation
@@ -53,12 +65,13 @@ RM_SINGLETON = 1
 RM_MULTI = 1
 RM_DUP = 1
 ```
+
 Use the peak_call command
 
 ```
 usage: peak_call [-h] -i HICPRO_RESULTS -o OUTPUT_DIRECTORY -r RESFRAG
                  [-p PREFIX] [-f FDR] [-a SIZES] [-t TEMPORARY_LOC]
-                 [-w THREADS] [-k] [-d] [-s OFF_DIAG]
+                 [-w THREADS] [-k] [-d] [-s OFF_DIAG] [-x] [-c]
 
 Peak calling from HiChIP data
 
@@ -82,19 +95,45 @@ optional arguments:
                         Temporary directory. If not supplied will be output
                         directory
   -w THREADS, --worker_threads THREADS
-                        Number of threads, minimum 4. Warning: Increasing this significantly increases RAM usage
+                        Number of threads, minimum 4. Warning: Increasing this
+                        significantly increases RAM usage
   -k, --keep_temp       Keep temporary files
   -d, --keep_diff       Prepare files for differential analysis
   -s OFF_DIAG, --offdiag OFF_DIAG
-                        How many off diagonal needs to be included
+                        How many off diagonal needs to be included (default =
+                        2)
+  -x, --chromX          Want to compensate Sex chromosomes weights? Requires
+                        specify annotation(SIZES) containing chrX and chrY
+  -c, --class_store     Store sparse site_matrix object for further use
 
 ```
 
-This command needs the HiC-pro_results/hic_results/data/sample output folder where all the valid pairs files are.
+This command needs the HICPRO_RESULTS/hic_results/data/sample/ output folder where all the valid pairs files are.
 The command requires that all the files in that folder are present, including the .REPairs, SCPairs and DEPairs file.
 
+This command will generate the following files:
 
+- log.log file, contains all the inputs used, the logs and the quality metrics calculated such as number of peaks called and fraction of reads in peaks.
+- bedgraph.bdg file, containing the coverage track with all the reads used in the peak calling step.
+- peaks.bed file, contains all the peaks called. The 3 extra information columns are:
+  * average signal in the peak
+  * maximum signal in the peak
+  * -log10 of p value of the peak
+- report.pdf, contains some useful plots and quality metrics.
 
+If enabled this command will also generate:
+- diffpeak_data.pickle, file containing the information necessary for differential peak analysis.
+- mat_obj.pickle, file containing the sparse matrix representation at a restriction site level of all the interactions. Currently in development but you can look into site_matrix_class.py to understand how it works.
+
+#### Example run
+Assuming the data is in HICPRO_RESULTS/hic_results/data/sample/ and installation of HiC-Pro is in HICPRO_dir/
+You can run the software with the following command:
+
+```
+peak_call -i HICPRO_RESULTS/hic_results/data/sample/ -o ./results -r HICPRO_dir/annotation/MboI_resfrag_hg38.bed 
+
+```
+Some example results can be found in [example_results](https://github.com/ChenfuShi/HiChIP_peaks/tree/master/example_results).
 
 #### Differential peak analysis
 
@@ -122,9 +161,6 @@ optional arguments:
                         How many samples need to be peak to be considered peak
                         for analysis
 ```
-
-
-
 
 
 ## Authors

@@ -28,19 +28,14 @@ def main():
                         help="directory containing previous step results")
     parser.add_argument("-o", "--output", dest="output_file",action="store",required=True,
                         help="Output file")
-
     parser.add_argument("-r", "--resfrag", dest="resfrag",action="store",required=True,
                         help="HiCpro resfrag file")          
     parser.add_argument("-a", "--annotation", dest="sizes",action="store",required=False, default=None,
                         help="HiCpro chromosome annotation file, default uses human chromosomes, excludes chrY")
-
     parser.add_argument("-m", "--minimum", dest="minimum",action="store",required=False,type=int,default=1,
                         help="How many samples need to be peak to be considered peak for analysis")          
 
-
-
     args = parser.parse_args()
-
 
     hichip_peaks_results = os.path.abspath(args.hichip_peaks_results)
     resfrag = os.path.abspath(args.resfrag)
@@ -56,8 +51,6 @@ def main():
     if sizes!=None and not os.path.isfile(sizes) :
         raise Exception("annotation files couldn't be opened")
 
-
-
     # prepare variables
 
     frag_index,frag_prop,frag_amount,valid_chroms, chroms_offsets = interaction_to_sparse.Read_resfrag(resfrag,sizes)
@@ -72,6 +65,7 @@ def main():
     input_backgrounds = []
     input_refined_peaks = []
 
+    # load one file at a time and append info into the lists
     for current_file in input_files:
         with open(os.path.join(hichip_peaks_results,current_file), "rb") as current_pickle:
             current_smoothed_diagonal, current_refined_peaks, current_background=pickle.load(current_pickle)
@@ -97,7 +91,7 @@ def main():
     # return list
     merged_peaks=[int(x) for x in list(cleaned_string)]
 
-    #get tuple of peaks. filtering at least minimum size of 3
+    #get tuple of peaks. filtering at least minimum size of 3 restriction sites
     peaks=[]
 
     i = 0
@@ -112,12 +106,6 @@ def main():
         i=i+1
 
     print("Merged {} peaks from samples".format(len(peaks)))
-
-    # peaks_weight=[]
-    # background_weight=[]
-    # for peak in peaks:
-    #     peaks_weight.append(smoothed_diagonal[peak[0]:peak[1]].sum())
-    #     background_weight.append(expected_background[peak[0]:peak[1]].sum())
 
     peaks_dict = {}
     for i in range(len(peaks)):
