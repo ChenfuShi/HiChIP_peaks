@@ -8,6 +8,16 @@ Using the differential analysis command it can be used to create a consensus pea
 
 Results from this package can then be used for further analysis and as a peaks dataset input for various loop calling software.
 
+#### Table of Contents 
+- [Getting Started](#getting-started)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Peak Calling](#peak-calling)
+    * [Differential peak analysis](#differential-peak-analysis)
+- [Authors](#authors)
+- [License](#license)
+- [Citation](#citation)
+
 ## Getting started
 
 ### Installation
