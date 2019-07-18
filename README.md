@@ -8,9 +8,9 @@ Using the differential analysis command it can be used to create a consensus pea
 
 Results from this package can then be used for further analysis and as a peaks dataset input for various loop calling software.
 
-#### Table of Contents 
+### Table of Contents 
 - [HiChIP peaks](#HiChIP-peaks)
-      - [Table of Contents](#Table-of-Contents)
+    - [Table of Contents](#Table-of-Contents)
   - [Getting started](#Getting-started)
     - [Installation](#Installation)
     - [Usage](#Usage)
