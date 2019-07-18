@@ -9,16 +9,17 @@ Using the differential analysis command it can be used to create a consensus pea
 Results from this package can then be used for further analysis and as a peaks dataset input for various loop calling software.
 
 #### Table of Contents 
-- [Getting Started](#getting-started)
-  * [Installation](#installation)
-  * [Usage](#usage)
-    * [Peak Calling](#peak-calling)
-    * [Example run](#example-run)
-    * [Differential peak analysis](#differential-peak-analysis)
-
-- [Authors](#authors)
-- [License](#license)
-- [Citation](#citation)
+- [HiChIP peaks](#HiChIP-peaks)
+      - [Table of Contents](#Table-of-Contents)
+  - [Getting started](#Getting-started)
+    - [Installation](#Installation)
+    - [Usage](#Usage)
+      - [Peak calling](#Peak-calling)
+      - [Example run](#Example-run)
+      - [Differential peak analysis](#Differential-peak-analysis)
+  - [Authors](#Authors)
+  - [License](#License)
+  - [Citation](#Citation)
 
 ## Getting started
 
