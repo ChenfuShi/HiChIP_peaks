@@ -111,6 +111,8 @@ optional arguments:
 This command needs the HICPRO_RESULTS/hic_results/data/sample/ output folder where all the valid pairs files are.
 The command requires that all the files in that folder are present, including the .REPairs, SCPairs and DEPairs file.
 
+**IMPORTANT** Please make sure that there is no other file named *allValidPairs* in the folder outside of the one containing the pairs, as this will cause the software to fail with *list index out of range* error. This includes a file that previous versions of HiC-pro created in the directory (allValidPairs.mergestat)
+
 This command will generate the following files:
 
 - log.log file, contains all the inputs used, the logs and the quality metrics calculated such as number of peaks called and fraction of reads in peaks.
