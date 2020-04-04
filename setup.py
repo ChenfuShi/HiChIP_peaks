@@ -12,7 +12,7 @@
 # python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 # twine upload dist/*
 
-__version__="0.1.1"
+__version__="0.1.2"
 
 # Read contents of long description (same as github readme)
 with open("README.md", "r") as fh:

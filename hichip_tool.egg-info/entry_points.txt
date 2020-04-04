@@ -1,0 +1,5 @@
+[console_scripts]
+diff_peaks = hichip_tool.diffpeaks:main
+make_bedgraph = hichip_tool.bedgraph:main
+peak_call = hichip_tool.main:main
+
