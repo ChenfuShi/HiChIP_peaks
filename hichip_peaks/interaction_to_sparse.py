@@ -108,7 +108,10 @@ def Prepare_files(folder,temporary_loc,tempcode,prefix):
 
     regex = re.compile(".*allValidPairs")
     try:
-        file_valid_pairs = list(filter(regex.match, files))[0]
+        file_valid_pairs = list(filter(regex.match, files))
+        if len(file_valid_pairs) > 1:
+            raise Exception("Error, There is more than 1 file with .*allValidPairs in the HiC-pro folder, please remove any file that doesn't contain pairs from the folder (eg. stats)")
+        file_valid_pairs = file_valid_pairs[0]
     except IndexError:
         raise Exception("couldn't find allValidPairs file")
     # because there can be multiple SC, DE and RE files list all of them.

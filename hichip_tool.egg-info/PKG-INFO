@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: hichip-tool
+Version: 0.1
+Summary: tool to find peaks from hichip data
+Home-page: https://github.com/ChenfuShi/domain_caller_site
+Author: Chenfu Shi
+Author-email: chenfu.shi@postgrad.manchester.ac.uk
+License: BSD
+Description: # domain_caller_site
+        
+        This tool can be used to find enriched peak regions from HiChIP datasets.
+        It takes the HiC-Pro output and converts it to a restriction site level resolution map. Then it models the enrichment as a negative binomial and finds regions that exceed the background levels.
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: License :: OSI Approved :: BSD License
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
