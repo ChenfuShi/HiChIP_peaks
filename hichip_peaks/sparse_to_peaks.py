@@ -45,7 +45,7 @@ def sparse_to_peaks(CSR_mat,frag_index,frag_prop,frag_amount,valid_chroms,chroms
     # Extract diagonal from sparse matrix
     diagonal , num_reads = extract_diagonal(CSR_mat,off_diag) #off diag here
     
-    logging.info("Number of reads used in peak calling: {}".format(num_reads/4))
+    logging.info("Number of reads used in peak calling: {}".format(num_reads/2))
     if num_reads < 30000000:
         logging.warning("WARNING: number of reads used for peak calling is very low. Consider doing more sequencing")
     

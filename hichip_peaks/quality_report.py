@@ -32,7 +32,7 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
             horizontalalignment='center',
             verticalalignment='center',
         fontsize=18)
-    num_reads = round(sum(smoothed_diagonal)/12)
+    num_reads = round(sum(smoothed_diagonal)/6)
     ax.text(0.5, 0.7, 'Number of reads used for peak calling : {}'.format(num_reads),
             horizontalalignment='center',
             verticalalignment='center',
@@ -44,7 +44,7 @@ def quality_report(peak_p_vals,refined_peaks, smoothed_diagonal, output_dir, pre
             verticalalignment='center',
         fontsize=16)
 
-    num_reads_in_peaks=round(sum([x for x,y in zip(smoothed_diagonal, refined_peaks) if y==1])/12)
+    num_reads_in_peaks=round(sum([x for x,y in zip(smoothed_diagonal, refined_peaks) if y==1])/6)
 
     ax.text(0.5, 0.3, 'Number of reads in peaks : {} ({:.2%})'.format(num_reads_in_peaks,num_reads_in_peaks/num_reads),
             horizontalalignment='center',
