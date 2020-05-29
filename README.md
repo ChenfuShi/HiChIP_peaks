@@ -203,6 +203,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 Please cite our paper when using this package for your research!
 ```
-Shi,C. et al. (2019) HiChIP-Peaks: A HiChIP peak calling algorithm. bioRxiv, 682781.
-https://doi.org/10.1101/682781
+Chenfu Shi, Magnus Rattray, Gisela Orozco, HiChIP-Peaks: a HiChIP peak calling algorithm, Bioinformatics, btaa202.
+https://doi.org/10.1093/bioinformatics/btaa202
 ```
