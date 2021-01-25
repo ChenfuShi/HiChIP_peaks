@@ -38,6 +38,7 @@ conda create --name hichip-peaks python=3.7 bedtools pip
 pip install hichip-peaks
 ```
 
+Please note that this software requires HiC-Pro version > 2.11.1
 
 ### Usage
 #### Peak calling
